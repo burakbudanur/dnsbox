@@ -1,0 +1,6 @@
+===============================================================================
+INPUT FILE FOR RELATIVE SYMMETRIES
+===============================================================================
+0              TxHalf            Half-domain shift in x   (1: impose, 0: don't)
+0              TzHalf            Half-domain shift in z   (1: impose, 0: don't)
+0              RxRy              RxRy symmetry            (1: impose, 0: don't)
