@@ -6,10 +6,10 @@ of the sinusoidally forced Navier-Stokes equations
 The version provided here is identical to the one used for the results 
 of 
 
-[YHB2021](https://arxiv.org/abs/2007.02584)
+[YHB2021](https://link.aps.org/doi/10.1103/PhysRevLett.126.244502)
 G. Yalniz, B. Hof, N. B. Budanur, 
 *Coarse Graining the State Space of a Turbulent Flow Using Periodic Orbits*. 
-Physical Review Letters (to appear), 
+Physical Review Letters **126**, 244502 (2021), 
 [arXiv:2007.02584](https://arxiv.org/abs/2007.02584).
 
 ## Compilation
@@ -92,7 +92,8 @@ converged period of the respective periodic orbit.
 
 If you use `dnsbox` in your research, please cite
 
-- Yalnız, Hof, Budanur, 
+- [YHB2021](https://link.aps.org/doi/10.1103/PhysRevLett.126.244502)
+G. Yalniz, B. Hof, N. B. Budanur, 
 *Coarse Graining the State Space of a Turbulent Flow Using Periodic Orbits*. 
-Physical Review Letters (to appear), 
-[arXiv:2007.02584](https://arxiv.org/abs/2007.02584)
+Physical Review Letters **126**, 244502 (2021), 
+[arXiv:2007.02584](https://arxiv.org/abs/2007.02584).
