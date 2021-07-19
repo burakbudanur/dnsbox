@@ -1,30 +1,82 @@
-===============================================================================
-INPUT FILE FOR SIMULATION PARAMETERS
-===============================================================================
-32 64 64       nz, ny, nx_all    grid dimensions
-1.0            Lz                Length in z (in units of Pi)
--------------------------------------------------------------------------------
-0              ITMIN             first time step
-4000000        ITMAX             last time step
-20             IPRINT1           how often to compute stats
-2000           IPRINT2           how often to save restart files
--------------------------------------------------------------------------------
-0.05           nu                Kinematic viscosity
--------------------------------------------------------------------------------
-0.0025         dt                time step
--------------------------------------------------------------------------------
-1              IC                InitCond (0: Rand, 1: state.ITMIN)
--------------------------------------------------------------------------------
-1              Rz                Reflection in z          (1: impose, 0: don't)
-1              Sx                Sx symmetry              (1: impose, 0: don't)
--------------------------------------------------------------------------------
-1.0E-8         atol              Absolute error tolerance for predictor-corrector
-1.0E-8         rtol              Relative error tolerance for predictor-corrector
-0.5            theta             implicitness             for predictor-corrector  
--------------------------------------------------------------------------------
-1              lamswitch         1: Stop the run if LAMINARIZED
-0.1            lamthreshold      Energy, prod and diss should all be within this relatively
--------------------------------------------------------------------------------
--1             seedno            -1: Seed number is picked from /dev/urandom
--------------------------------------------------------------------------------
-0              integratePeriodic 1: Use parameters from guess.in to integrate
+&grid
+nx = 48  ! Number of grid points in x 
+ny = 48  ! Number of grid points in y
+nz = 48  ! Number of grid points in z 
+Lx = 4.0 ! Length in x
+Lz = 4.0 ! Length in z
+/
+
+&physics
+forcing    = 1      ! 0: none, 1: sine, 2: cosine
+Re         = 630.0  ! Reynolds number
+tilt_angle = 0.0    ! (degrees)
+smag_const = 0.0    ! Smagorinsky constant (0: DNS, >0: LES)
+/
+
+&symmetries
+Rxy = F
+Ry  = F
+Rz  = F
+Sx  = F
+Sy  = F
+slice = F
+/
+
+&initiation
+IC            = -1  ! -2: Laminar, -1: Random, N: state.00000N
+random_seed   = 1   ! -1: Read seed number from /dev/urandom for random IC
+                    !     otherwise start with seed random_seed
+random_energy = 0.1 ! Random ICs have energy random_energy * eLaminar
+random_smooth = 0.9 ! Smoothness factor for random ICs
+t_start       = 0.0 ! Initial time
+i_start       = 0   ! Initial time step
+/
+
+&output 
+i_print_stats        = 50   ! How often to compute and write statistics
+i_print_steps        = 50   ! How often to write time stepper data
+i_save_fields        = 500	! How often to save state files to disk
+i_save_sliced_fields = -1	! How often to save sliced state files to disk
+i_print_spectrum     = -1   ! How often to compute spectra
+i_flush   = -1              ! How often to force flush textual data
+i_project = -1              ! How often to project onto the projection basis
+/
+
+&time_stepping
+dt             = 0.025       ! Size of time steps
+implicitness   = 0.5        ! Implicitness of the predictor-corrector
+steptol        = 1.0e-9     ! Tolerance in predictor-corrector
+ncorr          = 10         ! Maximum number of corrector steps
+adaptive_dt    = T          ! T: Enable dynamic timestep sizes
+dtmax          = 0.1        ! Maximum size of time steps
+courant_target = 0.25       ! Courant number to target
+/
+
+&termination
+terminate_laminar = T     ! Terminate (T) or not (F) when laminarized
+relerr_lam = 0.1          ! relerr for deciding laminar 
+wall_clock_limit = -1     ! if negative, unlimited (seconds)
+i_finish = -1             ! If positive, the run will stop after itime=i_finish
+/
+
+&spectra    ! spectral drop-off timeseries will compare:
+dnki = 1    ! mode dnki to
+dnkf = 0    ! mode nkmax + dnkf
+/
+
+&debugging
+log_divergence  = F  ! (T) Enable divergence logging
+/
+
+&lyapunov
+compute_lyap = F   ! T: compute the maximal Lyapunov exponent 
+i_lyap = 1000      ! delta t_{lyapunov} = i_lyapunov * dt
+eps_lyap = 1.0e-6  ! perturbation amplitude
+trans_lyap = 300   ! start estimating the exponent after this time
+k_cutoff = 10      ! cutoff wave number for perturbations. Disabled if <0
+/
+
+&projection
+num_proj_bases = 10 ! project onto the bases (u.000001 ... u.{num_proj_bases})
+subtract_origin = F ! T: subtract the origin (u.000000) before projecting
+/

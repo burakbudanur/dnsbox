@@ -1,0 +1,52 @@
+MPIF90 = mpiifort
+GFORTRAN = ifort
+# See https://software.intel.com/content/www/us/en/develop/articles/determining-root-cause-of-sigsegv-or-sigbus-errors.html
+# for an explanation for -heap-arrays
+FCFLAGS = -O3 -mkl -heap-arrays -fpp -fp-model consistent -I${MKL_HOME}/include/fftw
+LDFLAGS = -L${MKL_HOME}/lib/intel64
+
+# Modules
+MODULES = numbers.o\
+		  openmpi.o\
+		  io.o\
+		  parameters.o\
+		  fftw.o\
+		  diffops.o\
+		  symmops.o\
+		  test_symmops.o\
+		  fieldio.o\
+		  vfield.o\
+		  rhs.o\
+		  timestep.o\
+		  stats.o\
+		  lyap.o\
+		  symred.o\
+		  projector.o\
+		  run.o\
+		  solver.o
+
+UTILS 	= utilities/newton.o\
+          utilities/eigen.o
+
+all:  $(MODULES)
+	  $(MPIF90) $(FCFLAGS) -o dns.x main.f90 $(MODULES) $(LDFLAGS)
+
+utils: $(MODULES) $(UTILS)
+	   $(MPIF90) $(FCFLAGS) -o newton.x newton.f90 $(MODULES) $(LDFLAGS)
+	   $(MPIF90) $(FCFLAGS) -o eigen.x eigen.f90 $(MODULES) $(LDFLAGS)
+
+#compile
+
+# $(OBJ): $(MODULES) 
+
+%.o: %.f
+	$(MPIF90) -c $(FCFLAGS)  $<
+
+m_parameters.o: m_parameters.f90
+		bash version.sh && $(MPIF90) -c $(FCFLAGS) $<
+
+%.o: %.f90
+	$(MPIF90) -c $(FCFLAGS) $<
+
+clean:
+	rm *.o *.mod *.x

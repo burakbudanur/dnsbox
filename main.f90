@@ -1,239 +1,175 @@
 program main
-    
     ! modules:
-    use m_numbers
-    use m_openmpi
-    use m_io
-    use m_parameters
-    use m_work
-    use m_fields
-    use x_fftw
-    use m_state
-    use m_stats
-    use m_step    
-    use m_runs
-    
-    integer :: un ! dummy i/o channel
-
-    ! Time averages
-    character(255) :: averagesFile = 'averages.gp'
-    integer :: averagesFileCh, periodCh, ndts
-    real(dp) :: period
-    real(dp) :: avgKin, avgProd, avgDiss
-    real(dp) :: stdKin, stdProd, stdDiss
-    real(dp), allocatable :: average(:,:,:,:)
+    use numbers
+    use openmpi
+    use io
+    use parameters
+    use fftw
+    use fieldio
+    use rhs
+    use vfield
+    use timestep
+    use stats
+    use run
+    use solver
+    use projector
+    use lyap
+    use symred
     
     ! initialization:
-    call m_openmpi_init
-    call m_io_init
-    call m_parameters_init
-    call m_work_init
-    call m_fields_init
-    call x_fftw_allocate(1)
-    call x_fftw_init
-    call m_state_init
-    
-    ! Initial state
-    call m_runs_init
-
-    if (IC /= 1) then
-        call m_runs_impose_symmetries
-        write(out, *) "imposed symmetries"
+    call run_init
+    if (IC == -3) then
+        allocate(shapiro_vfieldk(nx_perproc, ny_half, nz, 3))
     end if
+    if (compute_lyap) call lyap_init(vel_vfieldk_now)
+    if (slice .and. (i_project > 0 .or. i_save_sliced_fields >0)) then
+        call symred_init
+        allocate(sliced_vel_vfieldk_now(nx_perproc, ny_half, nz, 3))
+    end if
+    if (i_project > 0) call projector_init
+    if (integrate_invariant) call solver_averaging_init
 
-    call m_stats_init
+    write(out, *) "Starting time stepping."
 
-    ! We don't want random ICs with negative production
-    call m_stats_compute
-    call MPI_BCAST(prod, 1, MPI_REAL8, 0, MPI_COMM_WORLD, mpi_err)
-    if (prod < 0 .and. IC == 0) then
-        if (SEEDNO == -1) then
-            write(out, *) "Random IC started with a negative production, re-rolling until positive."
-            flush(out)
-            do while (prod < 0)
-                call m_runs_init
-                call m_runs_impose_symmetries
-                call m_stats_compute
-                call MPI_BCAST(prod, 1, MPI_REAL8, 0, MPI_COMM_WORLD, mpi_err)
-            end do
-        else
-            write(out, *) "Random IC started with a negative production. Use another seed or set SEEDNO to -1."
-            call m_runs_exit
+    do
+        if (i_finish > 0 .and. itime > i_finish) exit
+
+        if ((i_save_sliced_fields > 0 .and. mod(itime, i_save_sliced_fields) == 0) .or. &
+            (i_project > 0 .and. mod(itime, i_project) == 0)) then
+
+            call symred_slice(vel_vfieldk_now, sliced_vel_vfieldk_now)
+            call symred_phases_write
+            call fieldio_write(sliced_vel_vfieldk_now)
+            call run_flush_channels
         end if
-    end if
-    
-    if (IC /= 1) then
-        ! Save the initial condition
-        write(out, *) 'Saving the initial condition'
-        flush(out)
-        wrk(:, :, :, 1:3) = fields(:, :, :, 1:3)
-        call m_runs_write
-    end if
 
-    ! Compute and print divergence:
-    call m_fields_divergence
+        if (i_save_fields > 0 .and. itime > i_start .and. mod(itime, i_save_fields) == 0) then
+            write(file_ext, "(i6.6)") itime/i_save_fields
+            fname = 'state.'//file_ext
+            call fieldio_write(vel_vfieldk_now)
+            call run_flush_channels
+        end if
 
-    write(out, *) "Starting time stepping"
-    flush(out)
+        if (adaptive_dt .or. (i_print_steps > 0 .and. mod(itime, i_print_steps) == 0)) then
+            call timestep_courant(vel_vfieldxx_now)
+        end if
 
-    if (integratePeriodic == 1) then
-        open(newunit=periodCh,status='old',file='guess.in')
-        read(periodCh,*) period 
-        read(periodCh,*) ndts 
-        close(periodCh)
-        if(ndts==-1) ndts = nint(period/dt)
-        ITMAX = ndts
-        dt = period / real(ndts, 8)
-        IPRINT1 = 1 ! For accurate time averages
+        if (adaptive_dt) call timestep_set_dt
 
-        ! Initialize the energetics
-        avgKin = zero
-        avgProd = zero
-        avgDiss = zero
-        stdKin = zero
-        stdProd = zero
-        stdDiss = zero
-        allocate(average(nz+2, ny, nx, 3))
-        average = 0
-    end if
+        if (i_print_stats > 0 .and. mod(itime, i_print_stats) == 0) then
+            
+            call stats_compute(vel_vfieldk_now, fvel_vfieldk_now)
 
-    do itime = ITMIN + 1, ITMAX
+            if (integrate_invariant .and. itime > i_start) call solver_averaging_update(vel_vfieldk_now)
 
-        ! Time stepping
-        
-        ! Compute stats if it is time
-        if (mod(itime - 1, IPRINT1) == 0) then
-            call m_stats_compute
+            if (IC == -3) then
+                ! expected shapiro field
+                call vfield_shapiro(time, shapiro_vfieldk)
+                ! its norm
+                call vfield_norm(shapiro_vfieldk, shapiro_norm, .false.)
+                ! difference from the field now
+                shapiro_vfieldk(:,:,:,1:3) =  shapiro_vfieldk(:,:,:,1:3) - vel_vfieldk_now(:,:,:,1:3)
+                ! delta's norm
+                call vfield_norm(shapiro_vfieldk, shapiro_normdelta, .false.)
 
-            if (integratePeriodic == 1 .and. itime > itmin + 1) then
-                ! Update the energetics
-                avgKin = avgKin + dt * energy
-                stdKin = stdKin + dt * energy**2
-                avgProd = avgProd + dt * prod
-                stdProd = stdProd + dt * prod**2
-                avgDiss = avgDiss + dt * eps_v
-                stdDiss = stdDiss + dt * eps_v**2
-
-                average(:,:,:,1:3) = average(:,:,:,1:3) + fields(:,:,:,1:3) * dt
             end if
 
         end if
-        
-        call m_step_calc_rhs
 
         ! Write stats
-        if (mod(itime - 1, IPRINT1) == 0) then
-            call m_stats_write
+        if (i_print_stats > 0 .and. mod(itime, i_print_stats) == 0) then
+            call stats_write
 
-            ! Several kill switches and checks
-            if (myid==0) then
-                ! Stop if LAMINARIZED
-                if (LAM_SWITCH == 1) then
-                    e_diff = abs(energy - e_target)/e_target
-                    prod_diff = abs(prod - prod_target)/prod_target
-                    diss_diff = abs(eps_v - diss_target)/diss_target
-                    
-                    if (e_diff < LAM_THRESHOLD .and. &
-                        prod_diff < LAM_THRESHOLD .and. diss_diff < LAM_THRESHOLD) then
-                        KILL_SWITCH = 1
-                        write(out, *) "Laminarized, stopping."
-                        open(newunit=un,file='LAMINARIZED',position='append')
-                        write(un,*) time
-                        close(un)
-                    end if
-                    
+            ! Stop if laminarized
+            if (my_id==0 .and. terminate_laminar) then
+                e_diff = abs(ekin - ekin_lam)/ekin_lam
+                input_diff = abs(powerin - powerin_lam)/powerin_lam
+                diss_diff = abs(dissip - dissip_lam )/dissip_lam 
+                
+                if (e_diff < relerr_lam .and. &
+                    input_diff < relerr_lam .and. diss_diff < relerr_lam) then
+                    kill_switch = .true.
+                    write(out, *) "Laminarized, stopping."
+                    open(newunit=laminarized_ch,file='LAMINARIZED',position='append')
+                    write(laminarized_ch,*) time
+                    close(laminarized_ch)
+                end if 
+            end if
+
+            if (IC == -3 .and. my_id == 0) then
+
+                ! shapiro stats
+        
+                inquire(file=TRIM(shapiro_file), exist=there, opened=there2)
+                if (.not.there) then
+                open(newunit=shapiro_ch,file=TRIM(shapiro_file),form='formatted')
+                    write(shapiro_ch,"(A2,"//i4_len//","//"3"//sp_len//")") &
+                        "# ", "itime", "time", "relerr"
                 end if
-            end if
-
-            ! Broadcast the KILL_SWITCH status
-            call MPI_BCAST(KILL_SWITCH, 1, MPI_REAL8, 0, MPI_COMM_WORLD, mpi_err)
-            
-            ! Kill the processes if signalled
-            if (KILL_SWITCH == 1) then
-                call m_runs_exit
-            end if
-            
-        end if
-        
-        call m_fields_dealias
-        call m_step_precorr
-        
-        call m_fields_pressure
-
-        time = time + dt  
-      
-        call m_runs_impose_symmetries
-
-        ! Dealias
-        call m_fields_dealias
-
-        ! This is after having time-stepped, so no ITIME lag here.
-        if (mod(itime, IPRINT2) == 0) then
-            ! write(out, *) 'Saving state file t = ', time
-            wrk(:, :, :, 1:3) = fields(:, :, :, 1:3)
-            call m_runs_write
-            flush(out)
-            if (statsWritten) flush(stat1fileCh)
-        end if
-        
-        ! Flush everything at the first time step
-        if (myid == 0 .and. itime == ITMIN + 1) then
-            flush(out)
-            flush(stat1fileCh)
-        end if
-    end do
+                if(there.and..not.there2) then
+                open(newunit=shapiro_ch,file=TRIM(shapiro_file),position='append')
+                end if
+                write(shapiro_ch,"(A2,"//i4_f//","//"3"//sp_f//")")&
+                    "  ", itime, time, shapiro_normdelta / shapiro_norm
     
-    write(out, *) "Finished time stepping. Run complete."
-    flush(out)
+                shapiro_written = .true.
 
-    ! One last time compute and write things if the next step would have it.
-    ! Because otherwise the very last state doesn't have anything recorded
-    ! except for its state file.
+            end if
 
-    call m_step_calc_rhs
-    if (mod(itime, IPRINT1) == 0) then
-        call m_stats_compute
-        if (integratePeriodic == 1) then
-            ! Update the energetics
-            avgKin = avgKin + dt * energy
-            stdKin = stdKin + dt * energy**2
-            avgProd = avgProd + dt * prod
-            stdProd = stdProd + dt * prod**2
-            avgDiss = avgDiss + dt * eps_v
-            stdDiss = stdDiss + dt * eps_v**2
-            average(:,:,:,1:3) = average(:,:,:,1:3) + fields(:,:,:,1:3) * dt
         end if
-    end if
 
-    if (mod(itime, IPRINT1) == 0) then
-        call m_stats_write
-    end if
+        if (i_print_steps > 0 .and. mod(itime, i_print_steps) == 0) call timestep_write
+
+        ! project onto POD basis
+        if (i_project > 0 .and. mod(itime, i_project) == 0) then
+            if (.not. slice) then
+                call projector_project(vel_vfieldk_now)
+            else
+                call projector_project(sliced_vel_vfieldk_now)
+            end if
+            call projector_write
+        end if
+
+        ! spectrum
+        if (i_print_spectrum > 0 .and. mod(itime, i_print_spectrum) == 0) call stats_spectra(vel_vfieldk_now)
+
+        ! Compute divergence
+        if (log_divergence .and. i_print_stats > 0 &
+                    .and. mod(itime, i_print_stats) == 0) call stats_worst_divergence(vel_vfieldk_now)
+
+        ! wall clock limit
+        call cpu_time(cput_now)
+        if (wall_clock_limit > 0 .and. cput_now - cput_start > wall_clock_limit) then
+            write(out, *) "Runtime limit reached, stopping."
+            kill_switch = .true.
+        end if
+
+        ! Broadcast the kill_switch status
+        call MPI_BCAST(kill_switch, 1, MPI_LOGICAL, 0, MPI_COMM_WORLD, mpi_err)
+
+        ! Flush manually if desired
+        if (i_flush > 0 .and. mod(itime, i_flush) == 0) then
+            call run_flush_channels
+        end if
+
+        if (kill_switch) then
+            call run_exit
+        end if
+
+        call timestep_precorr(vel_vfieldxx_now, vel_vfieldk_now, fvel_vfieldk_now)
+
+        time = time + dt
+        itime = itime + 1
+
+        if (compute_lyap) call lyap_step(vel_vfieldk_now)
+
+    end do
 
     ! Compute the averages
-    if (integratePeriodic == 1) then
+    if (integrate_invariant) call solver_averaging_finalize
 
-        avgKin = avgKin / time
-        stdKin = DSQRT(stdKin / time - avgKin ** 2)
-        avgProd = avgProd / time
-        stdProd = DSQRT(stdProd / time - avgProd ** 2)
-        avgDiss = avgDiss / time
-        stdDiss = DSQRT(stdDiss / time - avgDiss ** 2)
-
-        if (myid == 0) then
-            open(newunit=averagesFileCh,file=TRIM(averagesFile),form='formatted',status='replace')
-            write(averagesFileCh,"(A2,"//"6"//dp_len//")") "# ", "avgKin", "stdKin", "avgProd", "stdProd", "avgDiss", "stdDiss"
-            write(averagesFileCh,"(A2,"//"6"//dp_f//")") "  ", avgKin, stdKin, avgProd, stdProd, avgDiss, stdDiss
-            close(averagesFileCh)
-        end if
-
-        average(:,:,:,1:3) = average(:,:,:,1:3) / time
-        wrk(:,:,:,1:3) = average(:,:,:,1:3)
-        write(file_ext, "(i6.6)") 0
-        fname = 'average.'//file_ext
-        call m_work_write
-    end if
-     
-    call m_runs_exit
+    write(out, *) "Finished time stepping."
+    call run_exit
     
 end program main
 

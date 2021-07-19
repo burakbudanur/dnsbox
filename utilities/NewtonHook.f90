@@ -19,12 +19,11 @@
 ! Allocate(new_x(1:n),new_fx(1:n)), then put initial guess in new_x(1:n).  
 ! This variable is updated with the current best solution each iteration.
 !
-! f       evaluates y=f(x):  call f(n,x, y)
-! df      evaluates y=Jacobian.x, see GMRESm.f90:  call df(n,x, y)
-! dfp     preconditioner for df:  call df(n, x)
+! f       evaluates y=f(x):  call f(x, y)
+! df      evaluates y=Jacobian.x, see GMRESm.f90:  call df(x, y)
 ! sub     parameterless subroutine called at end of each iteration,
 !         so that data could be saved etc.
-! inprod  dot product:  d = inprod(n,a,b)
+! inprod  dot product:  d = inprod(a,b)
 ! m	  gmres dimension (also max num gmres its)
 ! n 	  dimension of x
 ! gtol    tolerence for gmres, typically 0.001
@@ -42,37 +41,25 @@
 !                    =4 unable to allocate memory
 !							A.P.Willis 2008
 !----------------------------------------------------------------------
- module m_newton
+
+ subroutine newtonhook(f, df, sub, inprod, m, n, gtol, &
+                       tol, del, mndl, mxdl, nits, info,out)
    
-   save
-   double precision, allocatable :: new_x(:), new_fx(:)
-   double precision              :: new_tol,  new_del
-   integer                       :: new_nits, new_gits
- end module m_newton
+   external                        :: f, df, sub
+   real(dp), external      :: inprod
+   integer(i4),          intent(in)    :: m, n
+   real(dp), intent(in)    :: gtol
+   real(dp), intent(inout) :: tol, del, mndl, mxdl
+   integer(i4),          intent(in)    :: nits
+   integer(i4),          intent(inout) :: info
+   integer(i4), intent(in) :: out
+   real(dp), allocatable :: v(:,:)
+   real(dp) :: tol_,x_(n),fx_(n), tol__,x__(n),fx__(n),del__
+   real(dp) :: mxdl_, ared, pred, snrm, s(n)
+   real(dp) :: gres, gdel, h((m+1)*m)
+   integer(i4) :: ginfo
 
-
- subroutine newtonhook(f, df, dfp, sub, inprod, m, n, gtol, &
-                       tol, del, mndl, mxdl, nits, info)
-   use m_newton
-   use m_io
-   
-   external                        :: f, df, dfp, sub
-   double precision, external      :: inprod
-   integer,          intent(in)    :: m, n
-   ! Updating Newton parameters after each save / g 200818
-   double precision, intent(in)    :: gtol
-!    double precision, intent(in)    :: gtol, tol, del, mndl, mxdl
-   double precision, intent(inout) :: tol, del, mndl, mxdl
-   integer,          intent(in)    :: nits
-   integer,          intent(inout) :: info
-   double precision, allocatable :: v(:,:)
-   double precision :: tol_,x_(n),fx_(n), tol__,x__(n),fx__(n),del__
-   double precision :: mxdl_, ared, pred, snrm, s(n)
-   double precision :: gres, gdel, h((m+1)*m)
-   integer :: ginfo
-
-   ! Updating Newton parameters after each save / g 200818
-   double precision :: normOld, normNew
+   real(dp) :: normOld, normNew
    
    write(out, *) 'beginning newton'
    flush(out)
@@ -88,18 +75,18 @@
    new_del  = del
    mxdl_    = mxdl
    ginfo    = info
-   call f(n,new_x, new_fx)
-   new_tol  = dsqrt(inprod(n,new_fx,new_fx))
-   if(del<0d0)  new_del = new_tol / 10d0
-   if(del<0d0)  mxdl_   = 1d99
+   call f(new_x, new_fx)
+   new_tol  = sqrt(inprod(new_fx,new_fx))
+   if(del<0.0_dp)  new_del = new_tol / 10.0_dp
+   if(del<0.0_dp)  mxdl_   = 1.0e99_dp
     if(info==1)  then
-        write(out, *) 'newton: nits=',new_nits,' res=',real(new_tol)
+        write(out, *) 'newton: nits=',new_nits,' res=', new_tol
     end if
    call sub()
    x_   = new_x
    fx_  = new_fx
    tol_ = new_tol
-   tol__ = 1d99
+   tol__ = 1.0e99_dp
 
    if(new_tol<tol) then
     if(info==1)  then
@@ -111,9 +98,9 @@
       return
    end if
 
-   ! Updating Newton parameters after each save / g 200818
-   normOld = dsqrt(inprod(n,new_x,new_x))
-                      ! - - - - Start main loop - - - - -  -
+   normOld = sqrt(inprod(new_x,new_x))
+   del__ = new_del
+    ! - - - - Start main loop - - - - -  -
     do while(.true.)
 
         if(new_del<mndl) then
@@ -126,29 +113,29 @@
             return      
         end if
                      ! find hookstep s and update x
-      s        = 0d0
+      s        = 0
       gres     = gtol * new_tol
       gdel     = new_del
       if(ginfo/=2) new_gits = m
-      if(del==0d0) new_gits = 9999
-      call gmresm(m,n,s,fx_,df,dfp,inprod,h,v,gres,gdel,new_gits,ginfo)
+      if(abs(del)<small) new_gits = 9999
+      call gmresm(m,n,s,fx_,df,inprod,h,v,gres,gdel,new_gits,ginfo,out)
       ginfo = info
       new_x = x_ - s
                      ! calc new norm, compare with prediction
-      call f(n,new_x, new_fx)
-      new_tol = dsqrt(inprod(n,new_fx,new_fx))
-      snrm = dsqrt(inprod(n,s,s))
+      call f(new_x, new_fx)
+      new_tol = sqrt(inprod(new_fx,new_fx))
+      snrm = sqrt(inprod(s,s))
       ared = tol_ - new_tol
       pred = tol_ - gdel
          
       if(info==1) then 
-         write(out, *) 'newton: nits=',new_nits,' res=',real(new_tol)
-         write(out, *) 'newton: gits=',new_gits,' del=',real(new_del)
-         write(out, *) 'newton: |s|=',real(snrm),' pred=',real(pred)
-         write(out, *) 'newton: ared/pred=',real(ared/pred)
+         write(out, *) 'newton: nits=',new_nits,' res=', new_tol
+         write(out, *) 'newton: gits=',new_gits,' del=', new_del
+         write(out, *) 'newton: |s|=', snrm,' pred=', pred
+         write(out, *) 'newton: ared/pred=', ared/pred
       end if
 
-      if(del==0d0) then
+      if(abs(del)<small) then
         if(info==1) write(out, *) 'newton: took full newton step'
       else if(new_tol>tol__) then
          if(info==1) write(out, *)  'newton: accepting previous step'
@@ -156,29 +143,29 @@
          new_fx  = fx__
          new_tol = tol__
          new_del = del__
-      else if(ared<0d0) then
+      else if(ared<0.0_dp) then
          if(info==1) write(out, *)  'newton: norm increased, try smaller step'
-         new_del = snrm * 0.5d0
+         new_del = snrm * 0.5_dp
          ginfo   = 2
-      else if(ared/pred<0.75d0) then
+      else if(ared/pred<0.75_dp) then
          if(info==1)  write(out, *)  'newton: step ok, trying smaller step'
          x__     = new_x
          fx__    = new_fx
          tol__   = new_tol
-         if(ared/pred> 0.1d0)  del__ = snrm
-         if(ared/pred<=0.1d0)  del__ = snrm*0.5d0
-         new_del = snrm * 0.7d0
+         if(ared/pred> 0.1_dp)  del__ = snrm
+         if(ared/pred<=0.1_dp)  del__ = snrm*0.5_dp
+         new_del = snrm * 0.7_dp
          ginfo   = 2
-      else if(snrm<new_del*0.9d0) then
+      else if(snrm<new_del*0.9_dp) then
          if(info==1) write(out, *)  'newton: step good, took full newton step'
-         new_del = min(mxdl_,snrm*2d0)
-      else if(new_del<mxdl_*0.9d0) then
+         new_del = min(mxdl_,snrm*2.0_dp)
+      else if(new_del<mxdl_*0.9_dp) then
          if(info==1) write(out, *)  'newton: step good, trying larger step'
          x__     = new_x
          fx__    = new_fx
          tol__   = new_tol
          del__   = new_del
-         new_del = min(mxdl_,snrm*2d0)
+         new_del = min(mxdl_,snrm*2.0_dp)
          ginfo   = 2
       end if      
                          ! check if need to try another s
@@ -189,13 +176,13 @@
       x_   = new_x
       fx_  = new_fx
       tol_ = new_tol
-      tol__ = 1d99
+      tol__ = 1.0e99_dp
 
-      ! Let's re-compute parameters after each call of sub() / g 200818
+      ! Re-compute parameters after each call of sub()
       ! Otherwise when Newton stops is not consistent with the relative error
       ! requirement in general
-      normNew = dsqrt(inprod(n,new_x,new_x))
-      if(normNew==0d0) normNew=1d0
+      normNew = sqrt(inprod(new_x,new_x))
+      if(abs(normNew)<small) normNew=1.0_dp
       tol = (tol / normOld) * normNew
       del = (del / normOld) * normNew
       mndl = (mndl / normOld) * normNew
@@ -204,8 +191,8 @@
 
       new_del = del
       mxdl_ = mxdl
-      if(del<0d0)  new_del = new_tol / 10d0
-      if(del<0d0)  mxdl_   = 1d99
+      if(del<0.0_dp)  new_del = new_tol / 10.0_dp
+      if(del<0.0_dp)  mxdl_   = 1.0e99_dp
 
       if(new_tol<tol) then
          if(info==1) write(out, *)  'newton: converged'

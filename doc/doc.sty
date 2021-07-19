@@ -1,0 +1,76 @@
+\ProvidesPackage{doc}
+
+% font stuff
+\usepackage[english]{babel} % typographical rules 
+\usepackage[p,osf]{scholax}
+\usepackage[T1]{fontenc} % use proper glyphs for non-ascii input
+\usepackage[utf8]{inputenc} % allow non-ascii input
+\usepackage[varqu,varl]{inconsolata}
+\usepackage{mathtools}
+\usepackage[scaled=1.075,ncf,vvarbb]{newtxmath}
+%
+\usepackage[backend=biber,style=alphabetic]{biblatex} % modern citation
+\usepackage[autostyle]{csquotes} % context sensitive quotation
+\usepackage{microtype} % typograpy tricks
+\usepackage{float}
+\usepackage[colorlinks=true]{hyperref} % hyperlinks in pdf
+\usepackage{bm} % bold symbols in maths mode
+\usepackage{booktabs} % publication quality tables
+\usepackage{graphicx} % enhanced support for graphics
+\usepackage{chngcntr} % change the resetting of counters
+\usepackage[justification=raggedright,singlelinecheck=false,labelformat=empty]{subcaption} % Support for sub-captions
+\usepackage{cleveref} % intelligent cross-referencing
+\usepackage{xparse} % document command parser
+\usepackage{siunitx} % a comprehensive (SI) units package
+\usepackage{listings} % typeset source code listings
+
+% Don't waste time compressing the pdf output
+\pdfcompresslevel=0
+\pdfobjcompresslevel=0
+
+% Do not number things with reference to chapters, here chapters are days
+% Requires chngcntr
+\counterwithout{figure}{section}
+\counterwithout{table}{section}
+\counterwithout{equation}{section}
+
+%Center all floats
+\makeatletter
+\g@addto@macro\@floatboxreset{\centering}
+\makeatother
+
+% Blog entries
+% New day
+\NewDocumentCommand{\newday}{m}{%
+    \section*{#1}%
+}
+% Post author
+\NewDocumentCommand{\name}{m}{%
+    \noindent \textbf{\textsc{#1:}}%
+}
+
+% Floating figure with subfigures, width based
+\NewDocumentCommand{\subgraphicw}{m m m}{
+    \begin{subfigure}[H]{#1 \textwidth}
+        \includegraphics[width=\textwidth]{#3}
+        \caption{(#2)}
+    \end{subfigure}
+}
+% Floating figure without subfigures, width based
+\NewDocumentCommand{\graphicw}{m m}{
+    \includegraphics[width=#1 \textwidth]{#2}
+}
+% Floating figure with subfigures, height based
+\NewDocumentCommand{\subgraphich}{m m m}{
+    \begin{subfigure}[H]{#1 \textwidth}
+        \includegraphics[height=\textwidth]{#3}
+        \caption{(#2)}
+    \end{subfigure}
+}
+% Floating figure without subfigures, height based
+\NewDocumentCommand{\graphich}{m m}{
+    \includegraphics[height=#1 \textwidth]{#2}
+}
+
+% arXiv markup, especially useful in bibliographies
+\NewDocumentCommand\arXiv{m}{\texttt{\href{http://arXiv.org/abs/#1}{arXiv:#1}}}

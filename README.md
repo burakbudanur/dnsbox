@@ -32,7 +32,7 @@ make
 
 ## Running
 
-Simulations are started from pair of files:
+Simulations are started from a pair of files:
 `state.000000` containing the state data and `parameters.in` containing
 the physical, output and debugging parameters.
 
@@ -65,7 +65,7 @@ kill 123456
 unless it stops by itself due to laminarization, runtime limits (see `parameters.in`) 
 or errors.
 
-One can also start simulations from random initial conditions by setting `IC` to `0`.
+One can also start simulations from random initial conditions by setting `IC` to `-1`.
 
 ## Utilities
 
@@ -73,27 +73,15 @@ As the run goes on, it will write state files (`state.123456`) and a file
 containing observables and time-stepper data (`stat.gp`).
 To visualize `stat.gp`, you can do
 ```
-analysis ./ 0 -1
+dnsstats ./ 0 -1
 ```
-
-## Periodic orbit database
-
-Along with the code, we provide a database of all periodic orbits that 
-we discovered at the parameter values reported in 
-[YHB2021](https://arxiv.org/abs/2007.02584) .
-These can be found in the subfolders `periodic_orbits/*`. 
-In these folders, `parameters.in` 
-files are set such that running `dns.x` integrates the periodic orbit 
-for one full period. 
-Thus, the first line of `guess.in` corresponds to the 
-converged period of the respective periodic orbit. 
 
 ## Citing
 
 If you use `dnsbox` in your research, please cite
 
-- [[YHB2021]](https://link.aps.org/doi/10.1103/PhysRevLett.126.244502)
-G. Yalniz, B. Hof, N. B. Budanur, 
+- [[YHB2021]](https://doi.org/10.1103/PhysRevLett.126.244502)
+G. Yalnız, B. Hof, N. B. Budanur, 
 *Coarse Graining the State Space of a Turbulent Flow Using Periodic Orbits*. 
 Physical Review Letters **126**, 244502 (2021), 
 [arXiv:2007.02584](https://arxiv.org/abs/2007.02584).
