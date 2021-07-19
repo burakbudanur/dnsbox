@@ -39,6 +39,11 @@ program main
 
             call symred_slice(vel_vfieldk_now, sliced_vel_vfieldk_now)
             call symred_phases_write
+        end if
+
+        if (i_save_sliced_fields > 0 .and. itime > i_start .and. mod(itime, i_save_sliced_fields) == 0) then
+            write(file_ext, "(i6.6)") itime/i_save_fields
+            fname = 'state.'//file_ext//'_sliced'
             call fieldio_write(sliced_vel_vfieldk_now)
             call run_flush_channels
         end if

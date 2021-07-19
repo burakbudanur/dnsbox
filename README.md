@@ -3,15 +3,6 @@ dnsbox is a fortran code for the direct numerical simulation (DNS)
 of the sinusoidally forced Navier-Stokes equations 
 (Kolmogorov flow) in a triply periodic domain. 
 
-The version provided here is identical to the one used for the results 
-of 
-
-[[YHB2021]](https://link.aps.org/doi/10.1103/PhysRevLett.126.244502)
-G. Yalniz, B. Hof, N. B. Budanur, 
-*Coarse Graining the State Space of a Turbulent Flow Using Periodic Orbits*. 
-Physical Review Letters **126**, 244502 (2021), 
-[arXiv:2007.02584](https://arxiv.org/abs/2007.02584).
-
 ## Compilation
 
 To compile in a Linux environment, you need the development libraries of:
