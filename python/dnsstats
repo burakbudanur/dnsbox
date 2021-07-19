@@ -52,7 +52,13 @@ def main():
 
 
 def dnsstats(
-    runDir, Ni, Nf, tfilter=False, noshow=False, tex=False, diet=False,
+    runDir,
+    Ni,
+    Nf,
+    tfilter=False,
+    noshow=False,
+    tex=False,
+    diet=False,
 ):
 
     dns.setPlotDefaults(tex=tex)
@@ -61,6 +67,7 @@ def dnsstats(
     figuresDir = dns.createFiguresDir(runDir)
 
     statsfile = "stat.gp"
+    stepsfile = "steps.gp"
     stats = np.loadtxt(runDir / statsfile, ndmin=2)
 
     # non-dimensionalize based on laminar velocity and its characteristic
@@ -144,48 +151,35 @@ def dnsstats(
         axRHS.set_title(title)
         figRHS.savefig(figuresDir / "normrhs.png")
 
-        # # time stepping stats
-        # figts, (axts1, axts2, axts4, axts3) = plt.subplots(
-        #     nrows=4, ncols=1, sharex=True
-        # )
-        # axts3.plot(time, Courant)
-        # axts3.set_xlabel(timeLabel)
-        # axts3.set_ylabel("Courant number")
+        if Path.is_file(runDir / stepsfile):
+            steps = np.loadtxt(runDir / stepsfile, ndmin=2)
+            time = steps[:, 1]
+            dt = steps[:, 2]
+            courant = steps[:, 3]
+            err_corr = steps[:, 4]
+            ncorr = steps[:, 5]
 
-        # axts4.plot(time, dt)
-        # axts4.set_xlabel(timeLabel)
-        # axts4.set_ylabel("$dt$")
+            # time stepping stats
+            figts, (axts1, axts2, axts4, axts3) = plt.subplots(
+                nrows=4, ncols=1, sharex=True
+            )
+            axts3.plot(time, courant)
+            axts3.set_xlabel(timeLabel)
+            axts3.set_ylabel("Courant number")
 
-        # axts2.plot(time[:-1], err_corr[1:])
-        # axts2.set_ylabel("Corrector rel. err.")
+            axts4.plot(time, dt)
+            axts4.set_xlabel(timeLabel)
+            axts4.set_ylabel("$dt$")
 
-        # axts1.plot(time[:-1], ncorr[1:])
-        # axts1.set_ylabel("Corrector iterations")
-        # axts1.yaxis.get_major_locator().set_params(integer=True)
-        # axts1.set_title(title)
+            axts2.plot(time[:-1], err_corr[1:])
+            axts2.set_ylabel("Corrector rel. err.")
 
-        # figts.savefig(figuresDir / "timestep.png")
+            axts1.plot(time[:-1], ncorr[1:])
+            axts1.set_ylabel("Corrector iterations")
+            axts1.yaxis.get_major_locator().set_params(integer=True)
+            axts1.set_title(title)
 
-        # spectral drop-offs
-        dropoffsFile = runDir / "dropoffs.gp"
-        if Path.is_file(dropoffsFile):
-            dropoffs = np.loadtxt(dropoffsFile, ndmin=2)
-            time = dropoffs[:, 1]
-            dropoffx = dropoffs[:, 2]
-            dropoffy = dropoffs[:, 3]
-            dropoffz = dropoffs[:, 4]
-
-            figdrop, axdrop = plt.subplots()
-            axdrop.plot(time, dropoffx, label="$x$")
-            axdrop.plot(time, dropoffy, label="$y$")
-            axdrop.plot(time, dropoffz, label="$z$")
-            axdrop.set_xlabel(timeLabel)
-            axdrop.set_ylabel("Spectral dropoff")
-            axdrop.set_yscale("log")
-            axdrop.grid(True, axis="y", which="both")
-            axdrop.legend()
-            axdrop.set_title(title)
-            figdrop.savefig(figuresDir / "dropoff.png")
+            figts.savefig(figuresDir / "steps.png")
 
     if not noshow:
         plt.show()
