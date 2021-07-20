@@ -5,6 +5,8 @@ from re import X
 import numpy as np
 import dns
 import pyvista as pv
+from matplotlib import pyplot as plt
+
 
 def main():
 
@@ -20,7 +22,7 @@ def main():
         action="store_true",
         dest="undotilt",
         help="rotate u and w to be parallel/orthogonal to the forcing.",
-    )    
+    )
     parser.add_argument(
         "--sublam",
         action="store_true",
@@ -28,23 +30,33 @@ def main():
         help="remove laminar part from states.",
     )
     parser.add_argument(
-        "-cvel", 
-        default=0.75, 
+        "-cvel",
+        default=0.75,
+        type=float,
         dest="cvel",
-        help="multiplier for velocity isosurfaces"
+        help="multiplier for velocity isosurfaces",
     )
     parser.add_argument(
-        "-cvor", 
-        default=0.5, 
+        "-cvor",
+        default=0.5,
+        type=float,
         dest="cvor",
-        help="multiplier for vorticity isosurfaces"
+        help="multiplier for vorticity isosurfaces",
     )
-    
+    parser.add_argument(
+        "--mirror_y",
+        action="store_true",
+        dest="mirror_y",
+        help="display the fundamental domain of mirror_y.",
+    )
+    parser.add_argument(
+        "--mirror_z",
+        action="store_true",
+        dest="mirror_z",
+        help="display the fundamental domain of mirror_z.",
+    )
 
     args = vars(parser.parse_args())
-
-    args['cvel']=float(args['cvel'])    
-    args['cvor']=float(args['cvor'])
 
     print(args)
 
@@ -53,11 +65,13 @@ def main():
 
 def dnsvis(
     state,
-    noshow = False,
-    undotilt = False, 
-    sublam = False,
-    cvel = 0.75,
-    cvor = 0.5
+    noshow=False,
+    undotilt=False,
+    sublam=False,
+    cvel=0.75,
+    cvor=0.5,
+    mirror_y=False,
+    mirror_z=False,
 ):
 
     pv.set_plot_theme("document")
@@ -80,43 +94,58 @@ def dnsvis(
     vor_spec = dns.vorticity(stateIn, Lx, Lz)
     vor_phys = dns.fftSpecToPhysAll(vor_spec)
 
-    velx = vel_phys[:, :, :, 0]
-    vorx = vor_phys[:, :, :, 0]
-
-    u = pv.wrap(velx)
-    om = pv.wrap(vorx)
-
     # pv.plot(u.contour(0))
 
     x_label = "$x$"
     y_label = "$y$"
     z_label = "$z$"
 
+    if not mirror_y:
+        yMid = "2"
+        ny_display = ny
+    else:
+        yMid = "1"
+        ny_display = ny // 2 + 1
+    if not mirror_z:
+        zMid = "L_z/2"
+        nz_display = nz
+    else:
+        zMid = "L_z/4"
+        nz_display = nz // 2 + 1
+
+    velx = vel_phys[:, :ny_display, :nz_display, 0]
+    vorx = vor_phys[:, :ny_display, :nz_display, 0]
+
+    u = pv.wrap(velx)
+    om = pv.wrap(vorx)
+
     vel_levels = cvel * np.array([np.min(velx), np.max(velx)])
     vor_levels = cvor * np.array([np.min(vorx), np.max(vorx)])
 
-    p = pv.Plotter()
+    p = pv.Plotter(off_screen=noshow)
     p.add_mesh(u.outline(), color="k")
-    p.add_mesh(u.contour(vel_levels), 
-                smooth_shading= True,
-                opacity = 0.35, 
-                cmap = ['red', 'blue'], 
-                clim = vel_levels, 
-                show_scalar_bar=False)
-    p.add_mesh(om.contour(vor_levels), 
-                smooth_shading= True,
-                opacity = 0.35, 
-                cmap = ['green', 'purple'], 
-                clim = vor_levels,
-                show_scalar_bar=False)
+    p.add_mesh(
+        u.contour(vel_levels),
+        smooth_shading=True,
+        opacity=0.35,
+        cmap=["red", "blue"],
+        clim=vel_levels,
+        show_scalar_bar=False,
+    )
+    p.add_mesh(
+        om.contour(vor_levels),
+        smooth_shading=True,
+        opacity=0.35,
+        cmap=["green", "purple"],
+        clim=vor_levels,
+        show_scalar_bar=False,
+    )
     p.show_axes()
 
     # u.plot()
     # print(type(u))
 
-
-    if not noshow:
-        p.show()
+    p.show(screenshot=figuresDir / "isosurf.png")
 
 
 if __name__ == "__main__":
