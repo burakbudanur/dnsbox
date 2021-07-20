@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 import argparse
 from pathlib import Path
-from re import X
 import numpy as np
 import dns
 import pyvista as pv
-from matplotlib import pyplot as plt
 
 
 def main():
@@ -16,6 +14,9 @@ def main():
     parser.add_argument("state", type=str, help="path to the state.")
     parser.add_argument(
         "--noshow", action="store_true", dest="noshow", help="do not display the plots."
+    )
+    parser.add_argument(
+        "--xvfb", action="store_true", dest="xvfb", help="render to a virtual display."
     )
     parser.add_argument(
         "--undotilt",
@@ -66,6 +67,7 @@ def main():
 def dnsvis(
     state,
     noshow=False,
+    xvfb=False,
     undotilt=False,
     sublam=False,
     cvel=0.75,
@@ -73,6 +75,10 @@ def dnsvis(
     mirror_y=False,
     mirror_z=False,
 ):
+
+    if xvfb:
+        noshow = True
+        pv.start_xvfb()
 
     pv.set_plot_theme("document")
     state = Path(state).resolve()
