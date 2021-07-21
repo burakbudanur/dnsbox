@@ -61,7 +61,7 @@ def dnscontinue(rundir, script):
                 try:
                     i_time = int(re.search(r'\d+', line).group())
 
-                    if i_time >= parameters['initiation']['i_start']:
+                    if i_time > parameters['initiation']['i_start']:
                         break
                     else:
                         print(i_time)
