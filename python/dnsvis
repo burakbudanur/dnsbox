@@ -2,6 +2,7 @@
 import argparse
 from pathlib import Path
 import numpy as np
+from pyvista.plotting.renderer import CameraPosition
 import dns
 import pyvista as pv
 
@@ -100,8 +101,6 @@ def dnsvis(
     vor_spec = dns.vorticity(stateIn, Lx, Lz)
     vor_phys = dns.fftSpecToPhysAll(vor_spec)
 
-    # pv.plot(u.contour(0))
-
     x_label = "$x$"
     y_label = "$y$"
     z_label = "$z$"
@@ -129,6 +128,7 @@ def dnsvis(
     vor_levels = cvor * np.array([np.min(vorx), np.max(vorx)])
 
     p = pv.Plotter(off_screen=noshow)
+    
     p.add_mesh(u.outline(), color="k")
     p.add_mesh(
         u.contour(vel_levels),
@@ -148,8 +148,13 @@ def dnsvis(
     )
     p.show_axes()
 
-    # u.plot()
-    # print(type(u))
+    #
+    p.camera.roll += 90
+    p.camera.elevation -= 15
+    p.camera.azimuth -= 45 
+    p.camera.roll += 30
+    p.camera.azimuth -= 45
+    p.camera.roll -= 10
 
     p.show(screenshot=figuresDir / "isosurf.png")
 
