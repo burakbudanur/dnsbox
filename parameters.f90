@@ -4,7 +4,7 @@ module parameters
     use io
 
     ! DO NOT EDIT ABOVE THIS LINE
-    character(7), parameter :: revision = "eefb923"
+    character(7), parameter :: revision = "390fce1"
 
     !# Geometry & discretization
     integer(i4) :: &
@@ -31,10 +31,10 @@ module parameters
     logical :: LES = .false. , tilting = .false.
 
     !# Initiation
-    integer(i4) :: IC = -1, &  ! Initial condition 
+    integer(i4) :: IC = -1     ! Initial condition 
                                ! (-3 shapiro, -2 laminar, -1 random, 
                                !   0 state.{istart / i_save_fields)
-                   i_start = 0 ! Starting time step  
+    integer(i8) :: i_start = 0 ! Starting time step  
     integer(i8) :: random_seed = -1 ! -1 reads from /dev/urandom
     real(dp) :: random_energy = 0.1_dp, & ! (ekin_laminar) energy of the random IC
                 random_smooth = 0.9_dp, & ! smoothness factor for random IC
@@ -293,11 +293,6 @@ module parameters
         write(out, '(79(''=''))')
                        
         ! ---------------------------------------------------------------------
-
-        if (IC /= 0) then
-            i_start = 0
-            t_start = 0
-        end if
 
         write(out, *) 't_start = ', t_start
         write(out, *) 'i_start = ', i_start
