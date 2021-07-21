@@ -45,7 +45,7 @@ module lyap
         lyap_sum = 0 
         lyap_time_elapsed = 0
 
-        write(file_ext, "(i6.6)") itime/i_save_fields         
+        write(file_ext, "(i6.6)") IC
         fname = 'perturb.'//file_ext
         INQUIRE(file=fname, exist=perturb_exists)
 
