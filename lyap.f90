@@ -15,8 +15,7 @@ module lyap
     real(dp), allocatable :: lyap_vfieldxx(:, :, :, :)
 
     integer(i4) :: lyap_out
-    real(dp)    :: lambda_max, norm_perturbation, &
-                   lyap_sum, lyap_time_elapsed 
+    real(dp)    :: lambda_max, norm_perturbation, lyap_sum
 
     character(255) :: lyap_out_format
     logical :: lyap_written = .false.
@@ -26,7 +25,10 @@ module lyap
 !==============================================================================
     subroutine lyap_init(vel_vfieldk)
         complex(dpc), intent(in) :: vel_vfieldk(:, :, :, :)
-        logical :: perturb_exists
+        logical :: lyap_exists, perturb_exists
+        integer(i4) :: lyap_itime, read_stat, lyap_in
+        real(dp) :: lyap_time, lyap_growth, lyap_lambda_max, time_elapsed
+        character(2) :: lyap_temp
     
         lyap_out_format = "(A2,"//i4_f//","//dp_f//","//dp_f//","//dp_f//")"
 
@@ -34,18 +36,42 @@ module lyap
         allocate(lyap_fvfieldk, mold=lyap_vfieldk)
         allocate(lyap_vfieldxx(nyy, nzz_perproc, nxx, 3))
 
-        ! Create the lyap file, replace it if it exists
-        if (my_id == 0) then
-            open(newunit=lyap_out,file='lyap.gp',status='replace')
+        inquire(file = 'lyap.gp', exist = lyap_exists)
+        if (lyap_exists .and. my_id == 0) then
+
+            open(newunit = lyap_in, file = 'lyap.gp', status = 'unknown') 
+
+            do 
+                read(lyap_in, lyap_out_format, iostat=read_stat)  &
+                lyap_temp, lyap_itime, lyap_time, lyap_growth, lyap_lambda_max
+                if (read_stat == 0) then
+                    lambda_max = lyap_lambda_max
+                else if (read_stat < 0) then
+                    exit ! end of file reached
+                end if
+            end do            
+            
+            time_elapsed  = time - trans_lyap
+            lyap_sum = lambda_max * time_elapsed
+            
+            close(lyap_in)
+
+            open(newunit = lyap_out, file = 'lyap.gp', status = 'old', position= 'append')
+            
+        else if (my_id == 0) then
+
+            open(newunit = lyap_out, file = 'lyap.gp', status = 'replace')
             write(lyap_out, "(A2,"//i4_len//","//dp_len//","//dp_len//","//dp_len//")") &
                                  "# ",  "itime",     "time",  "growth",  "lambda_max"
-            lyap_written = .true.
+
+            lyap_sum = 0 
+
         end if
         
-        lyap_sum = 0 
-        lyap_time_elapsed = 0
+        lyap_written = .true.
 
-        write(file_ext, "(i6.6)") IC
+
+        write(file_ext, "(i6.6)") itime/i_save_fields         
         fname = 'perturb.'//file_ext
         INQUIRE(file=fname, exist=perturb_exists)
 
@@ -95,11 +121,11 @@ module lyap
             lyap_vfieldk = lyap_vfieldk - vel_vfieldk 
             call vfield_norm(lyap_vfieldk, norm_perturbation, .true.)
             
-            if (time - t_start > trans_lyap) then
+            if (time > trans_lyap) then
 
                 growth = norm_perturbation / eps_lyap 
                 lyap_sum = lyap_sum + log(growth)
-                time_elapsed = time - t_start - trans_lyap
+                time_elapsed = time - trans_lyap
                 lambda_max = lyap_sum / time_elapsed
                                
                 ! Write the estimates
