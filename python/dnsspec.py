@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 from matplotlib import pyplot as plt
+from tqdm import tqdm
 
 import dns
 
@@ -14,7 +15,11 @@ dnkf = 0
 
 def main():
     parser = argparse.ArgumentParser("Computes direction-dependent spectra.")
-    parser.add_argument("statePath", type=str, help="path to the state of interest.")
+    parser.add_argument(
+        "statePath",
+        type=str,
+        help="path to the state (or a folder containing states if average) of interest.",
+    )
     parser.add_argument(
         "--tex", action="store_true", dest="tex", help="use LaTeX to render text."
     )
@@ -37,7 +42,23 @@ def main():
         "--savetxt",
         action="store_true",
         dest="savetxt",
-        help="save results as text files"
+        help="save results as text files",
+    )
+    parser.add_argument(
+        "--average",
+        action="store_true",
+        dest="average",
+        help="average multiple states.",
+    )
+    parser.add_argument(
+        "--si",
+        type=int,
+        help="initial state to average.",
+    )
+    parser.add_argument(
+        "--sf",
+        type=int,
+        help="final state to average.",
     )
 
     args = vars(parser.parse_args())
@@ -47,15 +68,70 @@ def main():
     harmonics = args["harmonics"]
     iso = args["iso"]
     savetxt = args["savetxt"]
+    average = args["average"]
+    si = args["si"]
+    sf = args["sf"]
 
-    figuresDir = dns.createFiguresDir(statePath.parent)
-
-    if iso:
-        (spec_x, spec_y, spec_z, spec_iso, Lx, Lz, dissipation,) = dnsspec(
-            statePath, iso=iso
-        )
+    if not average:
+        (
+            spec_x,
+            spec_y,
+            spec_z,
+            Lx,
+            Lz,
+            spec_iso,
+            dissipation,
+        ) = dnsspec(statePath, iso=iso)
     else:
-        (spec_x, spec_y, spec_z, Lx, Lz,) = dnsspec(statePath, iso=iso)
+        specs_x = None
+        specs_y = None
+        specs_z = None
+        if iso:
+            specs_iso = None
+            dissipations = None
+
+        print("Averaging spectra of multiple states.")
+        for i in tqdm(range(si, sf + 1)):
+            state_i = statePath / f"state.{str(i).zfill(6)}"
+            (
+                spec_x,
+                spec_y,
+                spec_z,
+                Lx,
+                Lz,
+                spec_iso,
+                dissipation,
+            ) = dnsspec(state_i, iso=iso)
+            if specs_x is None:
+                specs_x = spec_x
+            else:
+                specs_x += spec_x
+            if specs_y is None:
+                specs_y = spec_y
+            else:
+                specs_y += spec_y
+            if specs_z is None:
+                specs_z = spec_z
+            else:
+                specs_z += spec_z
+            if iso:
+                if specs_iso is None:
+                    specs_iso = spec_iso
+                else:
+                    specs_iso += spec_iso
+
+                if dissipations is None:
+                    dissipations = dissipation
+                else:
+                    dissipations += dissipation
+
+        nstates = sf - si + 1
+        spec_x = specs_x / nstates
+        spec_y = specs_y / nstates
+        spec_z = specs_z / nstates
+        if iso:
+            spec_iso = specs_iso / nstates
+            dissipation = dissipations / nstates
 
     if not harmonics:
         wavenums_x = np.arange(spec_x.shape[0]) * (2 * np.pi / Lx)
@@ -67,6 +143,7 @@ def main():
         wavenums_z = np.arange(spec_z.shape[0])
 
     dns.setPlotDefaults(tex=tex)
+    figuresDir = dns.createFiguresDir(statePath.parent)
 
     # log log versions
     fig, ax = plt.subplots()
@@ -83,7 +160,7 @@ def main():
     ax.set_yscale("log")
     fig.savefig(figuresDir / f"{statePath.name}_spec_x_log.png")
     # print("dropoff-x", np.sqrt(spec_x[dnki] / spec_x[-1 + dnkf]))
-    
+
     k_spec_x = np.zeros((spec_x.shape[0], 2))
     k_spec_x[:, 0] = wavenums_x
     k_spec_x[:, 1] = spec_x
@@ -103,7 +180,7 @@ def main():
     ax.set_xscale("log")
     ax.set_yscale("log")
     fig.savefig(figuresDir / f"{statePath.name}_spec_y_log.png")
-    
+
     k_spec_y = np.zeros((spec_y.shape[0], 2))
     k_spec_y[:, 0] = wavenums_y
     k_spec_y[:, 1] = spec_y
@@ -151,11 +228,14 @@ def main():
             ax.set_ylabel(f"$E_n$")
         ax.set_xscale("log")
         ax.set_yscale("log")
-        fig.savefig(figuresDir / f"{statePath.name}_spec_iso.png")        
-        
+        fig.savefig(figuresDir / f"{statePath.name}_spec_iso.png")
+
         if savetxt:
             np.savetxt(figuresDir / f"{statePath.name}_spec_iso.dat", spec_iso)
-            np.savetxt(figuresDir / f"{statePath.name}_dissipation.dat", np.array([dissipation]))
+            np.savetxt(
+                figuresDir / f"{statePath.name}_dissipation.dat",
+                np.array([dissipation]),
+            )
 
     if not noshow:
         plt.show()
@@ -240,9 +320,9 @@ def dnsspec(statePath, iso=False):
             spec_x,
             spec_y,
             spec_z,
-            spec_iso_,
             Lx,
             Lz,
+            spec_iso_,
             dissipation,
         )
     else:
@@ -252,6 +332,8 @@ def dnsspec(statePath, iso=False):
             spec_z,
             Lx,
             Lz,
+            None,
+            None,
         )
 
 
