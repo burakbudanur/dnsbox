@@ -118,12 +118,12 @@ def dnsprofile(
     ax.set_xlabel(f"$\\langle u \\rangle_{{xz}}$")
     ax.set_ylabel(yLabel)
     ax.set_ylim(bottom=ys[0], top=ys[ny_display - 1])
-    fig.savefig(figuresDir / f"{state.name[-6:]}_velocity_profile.png")
+    fig.savefig(figuresDir / f"{state.name}_velocity_profile.png")
     if savetxt:
         ys_velx = np.zeros((ny_display, 2))
         ys_velx[:, 0] = ys[:ny_display]
         ys_velx[:, 1] = velx_profile[:ny_display]
-        np.savetxt(figuresDir / f"{state.name[-6:]}_velocity_profile.dat", ys_velx)
+        np.savetxt(figuresDir / f"{state.name}_velocity_profile.dat", ys_velx)
 
     if not noshow:
         plt.show()

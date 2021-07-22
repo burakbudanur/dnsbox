@@ -135,7 +135,7 @@ def dnsbatchimshow(
         axVelMid.set_ylim(bottom=zs[0], top=zs[-1])
         axVelMid.axis("off")
         figVelMid.savefig(
-            figuresDir / f"velocity_midy_{state.name[-6:]}.png",
+            figuresDir / f"velocity_midy_{state.name}.png",
             bbox_inches="tight",
             pad_inches=0,
         )
@@ -157,7 +157,7 @@ def dnsbatchimshow(
         axVorMid.set_ylim(bottom=zs[0], top=zs[-1])
         axVorMid.axis("off")
         figVorMid.savefig(
-            figuresDir / f"vorticity_midy_{state.name[-6:]}.png",
+            figuresDir / f"vorticity_midy_{state.name}.png",
             bbox_inches="tight",
             pad_inches=0,
         )
@@ -179,7 +179,7 @@ def dnsbatchimshow(
         axVelMidZ.set_ylim(bottom=ys[0], top=ys[-1])
         axVelMidZ.axis("off")
         figVelMidZ.savefig(
-            figuresDir / f"velocity_midz_{state.name[-6:]}.png",
+            figuresDir / f"velocity_midz_{state.name}.png",
             bbox_inches="tight",
             pad_inches=0,
         )
@@ -201,7 +201,7 @@ def dnsbatchimshow(
         axVorMidZ.set_ylim(bottom=ys[0], top=ys[-1])
         axVorMidZ.axis("off")
         figVorMidZ.savefig(
-            figuresDir / f"vorticity_midz_{state.name[-6:]}.png",
+            figuresDir / f"vorticity_midz_{state.name}.png",
             bbox_inches="tight",
             pad_inches=0,
         )

@@ -141,7 +141,7 @@ def main():
     axVelMid.set_title(title)
     colorbar(axVelMid, cVelMid, label=f"$u(y={yMid})$")
     figVelMid.savefig(
-        figuresDir / f"{state.name[-6:]}_velocity_midy.png", bbox_inches="tight"
+        figuresDir / f"{state.name}_velocity_midy.png", bbox_inches="tight"
     )
 
     # streamwise vorticity, shearwise midplane
@@ -164,7 +164,7 @@ def main():
     axVorMid.set_title(title)
     colorbar(axVorMid, cVorMid, label=f"$\\omega(y={yMid})$")
     figVorMid.savefig(
-        figuresDir / f"{state.name[-6:]}_vorticity_midy.png", bbox_inches="tight"
+        figuresDir / f"{state.name}_vorticity_midy.png", bbox_inches="tight"
     )
 
     # streamwise velocity, spanwise midplane
@@ -187,7 +187,7 @@ def main():
     axVelMidZ.set_title(title)
     colorbar(axVelMidZ, cVelMidZ, label=f"$u(z={zMid})$")
     figVelMidZ.savefig(
-        figuresDir / f"{state.name[-6:]}_velocity_midz.png", bbox_inches="tight"
+        figuresDir / f"{state.name}_velocity_midz.png", bbox_inches="tight"
     )
 
     # streamwise vorticity, spanwise midplane
@@ -210,7 +210,7 @@ def main():
     axVorMidZ.set_title(title)
     colorbar(axVorMidZ, cVorMidZ, label=f"$\\omega(z={zMid})$")
     figVorMidZ.savefig(
-        figuresDir / f"{state.name[-6:]}_vorticity_midz.png", bbox_inches="tight"
+        figuresDir / f"{state.name}_vorticity_midz.png", bbox_inches="tight"
     )
 
     if not noshow:

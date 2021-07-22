@@ -81,14 +81,14 @@ def main():
         ax.set_ylabel(f"$E_{{n_x}}$")
     ax.set_xscale("log")
     ax.set_yscale("log")
-    fig.savefig(figuresDir / f"{statePath.name[-6:]}_spec_x_log.png")
+    fig.savefig(figuresDir / f"{statePath.name}_spec_x_log.png")
     # print("dropoff-x", np.sqrt(spec_x[dnki] / spec_x[-1 + dnkf]))
     
     k_spec_x = np.zeros((spec_x.shape[0], 2))
     k_spec_x[:, 0] = wavenums_x
     k_spec_x[:, 1] = spec_x
     if savetxt:
-        np.savetxt(figuresDir / f"{statePath.name[-6:]}_spec_x.dat", k_spec_x)
+        np.savetxt(figuresDir / f"{statePath.name}_spec_x.dat", k_spec_x)
 
     fig, ax = plt.subplots()
     ax.plot(wavenums_y[1:], spec_y[1:])
@@ -102,13 +102,13 @@ def main():
         ax.set_ylabel(f"$E_{{n_y}}$")
     ax.set_xscale("log")
     ax.set_yscale("log")
-    fig.savefig(figuresDir / f"{statePath.name[-6:]}_spec_y_log.png")
+    fig.savefig(figuresDir / f"{statePath.name}_spec_y_log.png")
     
     k_spec_y = np.zeros((spec_y.shape[0], 2))
     k_spec_y[:, 0] = wavenums_y
     k_spec_y[:, 1] = spec_y
     if savetxt:
-        np.savetxt(figuresDir / f"{statePath.name[-6:]}_spec_y.dat", k_spec_y)
+        np.savetxt(figuresDir / f"{statePath.name}_spec_y.dat", k_spec_y)
 
     # print("dropoff-y", np.sqrt(spec_y[dnki] / spec_y[-1 + dnkf]))
 
@@ -124,14 +124,14 @@ def main():
         ax.set_ylabel(f"$E_{{n_z}}$")
     ax.set_xscale("log")
     ax.set_yscale("log")
-    fig.savefig(figuresDir / f"{statePath.name[-6:]}_spec_z_log.png")
+    fig.savefig(figuresDir / f"{statePath.name}_spec_z_log.png")
     # print("dropoff-z", np.sqrt(spec_z[dnki] / spec_z[-1 + dnkf]))
 
     k_spec_z = np.zeros((spec_z.shape[0], 2))
     k_spec_z[:, 0] = wavenums_z
     k_spec_z[:, 1] = spec_z
     if savetxt:
-        np.savetxt(figuresDir / f"{statePath.name[-6:]}_spec_z.dat", k_spec_z)
+        np.savetxt(figuresDir / f"{statePath.name}_spec_z.dat", k_spec_z)
 
     if iso:
         fig, ax = plt.subplots()
@@ -151,11 +151,11 @@ def main():
             ax.set_ylabel(f"$E_n$")
         ax.set_xscale("log")
         ax.set_yscale("log")
-        fig.savefig(figuresDir / f"{statePath.name[-6:]}_spec_iso.png")        
+        fig.savefig(figuresDir / f"{statePath.name}_spec_iso.png")        
         
         if savetxt:
-            np.savetxt(figuresDir / f"{statePath.name[-6:]}_spec_iso.dat", spec_iso)
-            np.savetxt(figuresDir / f"{statePath.name[-6:]}_dissipation.dat", np.array([dissipation]))
+            np.savetxt(figuresDir / f"{statePath.name}_spec_iso.dat", spec_iso)
+            np.savetxt(figuresDir / f"{statePath.name}_dissipation.dat", np.array([dissipation]))
 
     if not noshow:
         plt.show()

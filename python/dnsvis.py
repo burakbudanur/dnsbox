@@ -128,7 +128,7 @@ def dnsvis(
     vor_levels = cvor * np.array([np.min(vorx), np.max(vorx)])
 
     p = pv.Plotter(off_screen=noshow)
-    
+
     p.add_mesh(u.outline(), color="k")
     p.add_mesh(
         u.contour(vel_levels),
@@ -151,12 +151,12 @@ def dnsvis(
     #
     p.camera.roll += 90
     p.camera.elevation -= 15
-    p.camera.azimuth -= 45 
+    p.camera.azimuth -= 45
     p.camera.roll += 30
     p.camera.azimuth -= 45
     p.camera.roll -= 10
 
-    p.show(screenshot=figuresDir / "isosurf.png")
+    p.show(screenshot=figuresDir / f"{state.name}_isosurf.png")
 
 
 if __name__ == "__main__":
