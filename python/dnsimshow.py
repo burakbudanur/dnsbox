@@ -49,7 +49,7 @@ def main():
     )
     args = vars(parser.parse_args())
 
-    state = args["state"]
+    state = Path(args["state"])
     tex = args["tex"]
     noshow = args["noshow"]
     undotilt = args["undotilt"]
@@ -94,6 +94,33 @@ def main():
     dns.setPlotDefaults(tex=tex)
     figuresDir = dns.createFiguresDir(state.parent)
 
+    # get the color scales
+    min_velx_midy, min_vorx_midy, min_velx_midz, min_vorx_midz = (
+        np.inf,
+        np.inf,
+        np.inf,
+        np.inf,
+    )
+    max_velx_midy, max_vorx_midy, max_velx_midz, max_vorx_midz = (
+        -np.inf,
+        -np.inf,
+        -np.inf,
+        -np.inf,
+    )
+    min_velx_midy, min_vorx_midy, min_velx_midz, min_vorx_midz = (
+        min(min_velx_midy, np.amin(velx_midy)),
+        min(min_vorx_midy, np.amin(vorx_midy)),
+        min(min_velx_midz, np.amin(velx_midz)),
+        min(min_vorx_midz, np.amin(vorx_midz)),
+    )
+
+    max_velx_midy, max_vorx_midy, max_velx_midz, max_vorx_midz = (
+        max(max_velx_midy, np.amax(velx_midy)),
+        max(max_vorx_midy, np.amax(vorx_midy)),
+        max(max_velx_midz, np.amax(velx_midz)),
+        max(max_vorx_midz, np.amax(vorx_midz)),
+    )
+
     # streamwise velocity, shearwise midplane
     scale = np.amax(np.abs(velx_midy))
     figVelMid, axVelMid = plt.subplots()
@@ -102,8 +129,8 @@ def main():
         cmap=cmap,
         aspect="equal",
         origin="lower",
-        vmin=-scale,
-        vmax=scale,
+        vmin=min_velx_midy,
+        vmax=max_velx_midy,
         interpolation="spline16",
         extent=[xs[0], xs[-1], zs[0], zs[-1]],
     )
@@ -125,8 +152,8 @@ def main():
         cmap=cmap,
         aspect="equal",
         origin="lower",
-        vmin=-scale,
-        vmax=scale,
+        vmin=min_vorx_midy,
+        vmax=max_vorx_midy,
         interpolation="spline16",
         extent=[xs[0], xs[-1], zs[0], zs[-1]],
     )
@@ -148,8 +175,8 @@ def main():
         cmap=cmap,
         aspect="equal",
         origin="lower",
-        vmin=-scale,
-        vmax=scale,
+        vmin=min_velx_midz,
+        vmax=max_velx_midz,
         interpolation="spline16",
         extent=[xs[0], xs[-1], ys[0], ys[-1]],
     )
@@ -171,8 +198,8 @@ def main():
         cmap=cmap,
         aspect="equal",
         origin="lower",
-        vmin=-scale,
-        vmax=scale,
+        vmin=min_vorx_midz,
+        vmax=max_vorx_midz,
         interpolation="spline16",
         extent=[xs[0], xs[-1], ys[0], ys[-1]],
     )

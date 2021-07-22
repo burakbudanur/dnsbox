@@ -56,7 +56,18 @@ def dnsbatchimshow(
     statesDir = Path(statesDir)
     states = sorted(list(statesDir.glob("state.*")))
 
-    scale_velx_midy, scale_vorx_midy, scale_velx_midz, scale_vorx_midz = 0, 0, 0, 0
+    min_velx_midy, min_vorx_midy, min_velx_midz, min_vorx_midz = (
+        np.inf,
+        np.inf,
+        np.inf,
+        np.inf,
+    )
+    max_velx_midy, max_vorx_midy, max_velx_midz, max_vorx_midz = (
+        -np.inf,
+        -np.inf,
+        -np.inf,
+        -np.inf,
+    )
     # get the scales first
     print("Finding the maxima in the snapshots.")
     with tqdm(total=len(states), disable=not print_messages) as pbar:
@@ -70,13 +81,25 @@ def dnsbatchimshow(
             forcing, nx, ny, nz, Lx, Lz, Re, tilt_angle, dt, itime, time = headers
             uw_untilted, ny_display, nz_display = data
 
-            scale_velx_midy, scale_vorx_midy, scale_velx_midz, scale_vorx_midz = (
-                max(scale_velx_midy, np.amax(np.abs(velx_midy))),
-                max(scale_vorx_midy, np.amax(np.abs(vorx_midy))),
-                max(scale_velx_midz, np.amax(np.abs(velx_midz))),
-                max(scale_vorx_midz, np.amax(np.abs(vorx_midz))),
+            min_velx_midy, min_vorx_midy, min_velx_midz, min_vorx_midz = (
+                min(min_velx_midy, np.amin(velx_midy)),
+                min(min_vorx_midy, np.amin(vorx_midy)),
+                min(min_velx_midz, np.amin(velx_midz)),
+                min(min_vorx_midz, np.amin(vorx_midz)),
+            )
+
+            max_velx_midy, max_vorx_midy, max_velx_midz, max_vorx_midz = (
+                max(max_velx_midy, np.amax(velx_midy)),
+                max(max_vorx_midy, np.amax(vorx_midy)),
+                max(max_velx_midz, np.amax(velx_midz)),
+                max(max_vorx_midz, np.amax(vorx_midz)),
             )
             pbar.update()
+
+    print("Minima:")
+    print(min_velx_midy, min_vorx_midy, min_velx_midz, min_vorx_midz)
+    print("Maxima:")
+    print(max_velx_midy, max_vorx_midy, max_velx_midz, max_vorx_midz)
 
     xs = np.array([i * (Lx / nx) for i in range(0, nx)])
     ys = np.array([j * (dns.Ly / ny) for j in range(0, ny_display)])
@@ -103,8 +126,8 @@ def dnsbatchimshow(
             cmap=cmap,
             aspect="equal",
             origin="lower",
-            vmin=-scale_velx_midy,
-            vmax=scale_velx_midy,
+            vmin=min_velx_midy,
+            vmax=max_velx_midy,
             interpolation="spline16",
             extent=[xs[0], xs[-1], zs[0], zs[-1]],
         )
@@ -125,8 +148,8 @@ def dnsbatchimshow(
             cmap=cmap,
             aspect="equal",
             origin="lower",
-            vmin=-scale_vorx_midy,
-            vmax=scale_vorx_midy,
+            vmin=min_vorx_midy,
+            vmax=max_vorx_midy,
             interpolation="spline16",
             extent=[xs[0], xs[-1], zs[0], zs[-1]],
         )
@@ -147,8 +170,8 @@ def dnsbatchimshow(
             cmap=cmap,
             aspect="equal",
             origin="lower",
-            vmin=-scale_velx_midz,
-            vmax=scale_velx_midz,
+            vmin=min_velx_midz,
+            vmax=max_velx_midz,
             interpolation="spline16",
             extent=[xs[0], xs[-1], ys[0], ys[-1]],
         )
@@ -169,8 +192,8 @@ def dnsbatchimshow(
             cmap=cmap,
             aspect="equal",
             origin="lower",
-            vmin=-scale_vorx_midz,
-            vmax=scale_vorx_midz,
+            vmin=min_vorx_midz,
+            vmax=max_vorx_midz,
             interpolation="spline16",
             extent=[xs[0], xs[-1], ys[0], ys[-1]],
         )
@@ -184,9 +207,9 @@ def dnsbatchimshow(
         )
         plt.close(figVorMidZ)
 
-    Parallel(
-        n_jobs=n_jobs, backend=def_joblib_backend, verbose=def_joblib_verbosity
-    )(delayed(plot_state_i)(i) for i in tqdm(range(len(states))))
+    Parallel(n_jobs=n_jobs, backend=def_joblib_backend, verbose=def_joblib_verbosity)(
+        delayed(plot_state_i)(i) for i in tqdm(range(len(states)))
+    )
 
 
 if __name__ == "__main__":
