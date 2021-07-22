@@ -2,7 +2,6 @@
 import argparse
 from pathlib import Path
 import numpy as np
-from pyvista.plotting.renderer import CameraPosition
 import dns
 import pyvista as pv
 
