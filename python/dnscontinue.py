@@ -31,7 +31,7 @@ def main():
 
 def dnscontinue(rundir, script):
 
-    rundir = Path(rundir).resolve()
+    rundir = Path(rundir)
     os.chdir(rundir)
 
     states = list(glob.glob('state.*'))

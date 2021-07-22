@@ -30,7 +30,7 @@ def isEven(N):
 
 
 def createFiguresDir(mainDir):
-    mainDir = Path(mainDir).resolve()
+    mainDir = Path(mainDir)
     figuresDir = mainDir / figuresDirName
     # Create it if it doesn't exist
     if not Path.is_dir(figuresDir):
@@ -76,7 +76,7 @@ def readParameters(parametersFile):
     import f90nml
 
     # Convert to Path
-    parametersFile = Path(parametersFile).resolve()
+    parametersFile = Path(parametersFile)
 
     params = f90nml.read(parametersFile)
 
@@ -84,14 +84,14 @@ def readParameters(parametersFile):
 
 
 def writeParameters(params, parametersFile):
-    parametersFile = Path(parametersFile).resolve()
+    parametersFile = Path(parametersFile)
     with open(parametersFile, "w") as f:
         params.write(f)
 
 
 def readState_xcompact(stateFilePath):
 
-    stateFilePath = Path(stateFilePath).resolve()
+    stateFilePath = Path(stateFilePath)
     stateFile = open(stateFilePath, "rb")
 
     (forcing,) = unpack("=1i", stateFile.read(1 * 4))
@@ -165,7 +165,7 @@ def readState_xcompact(stateFilePath):
 
 def readState_ycompact(stateFilePath):
 
-    stateFilePath = Path(stateFilePath).resolve()
+    stateFilePath = Path(stateFilePath)
     stateFile = open(stateFilePath, "rb")
 
     (forcing,) = unpack("=1i", stateFile.read(1 * 4))
@@ -247,7 +247,7 @@ def readState_ycompact(stateFilePath):
 
 def readState_zcompact(stateFilePath):
 
-    stateFilePath = Path(stateFilePath).resolve()
+    stateFilePath = Path(stateFilePath)
     stateFile = open(stateFilePath, "rb")
 
     (forcing,) = unpack("=1i", stateFile.read(1 * 4))
@@ -321,7 +321,7 @@ def readState_zcompact(stateFilePath):
 
 def readState_nocompact(stateFilePath):
 
-    stateFilePath = Path(stateFilePath).resolve()
+    stateFilePath = Path(stateFilePath)
     stateFile = open(stateFilePath, "rb")
 
     (forcing,) = unpack("=1i", stateFile.read(1 * 4))
@@ -367,7 +367,7 @@ def readState_nocompact(stateFilePath):
 
 
 def readState(stateFilePath):
-    stateFilePath = Path(stateFilePath).resolve()
+    stateFilePath = Path(stateFilePath)
     stateFile = open(stateFilePath, "rb")
 
     (forcing,) = unpack("=1i", stateFile.read(1 * 4))
@@ -397,7 +397,7 @@ def writeState_xcompact(
     outFile="state.000000",
 ):
     # Write array to a dnsbox state file.
-    outFile = Path(outFile).resolve()
+    outFile = Path(outFile)
     stateFile = open(outFile, "wb")
 
     nx, ny_half, nz, _ = state.shape
@@ -457,7 +457,7 @@ def writeState_ycompact(
     outFile="state.000000",
 ):
     # Write array to a dnsbox state file.
-    outFile = Path(outFile).resolve()
+    outFile = Path(outFile)
     stateFile = open(outFile, "wb")
 
     nx, ny_half, nz, _ = state.shape
@@ -528,7 +528,7 @@ def writeState_zcompact(
     outFile="state.000000",
 ):
     # Write array to a dnsbox state file.
-    outFile = Path(outFile).resolve()
+    outFile = Path(outFile)
     stateFile = open(outFile, "wb")
 
     nx, ny_half, nz, _ = state.shape
@@ -588,7 +588,7 @@ def writeState_nocompact(
     outFile="state.000000",
 ):
     # Write array to a dnsbox state file.
-    outFile = Path(outFile).resolve()
+    outFile = Path(outFile)
     stateFile = open(outFile, "wb")
 
     nx, ny_half, nz, _ = state.shape

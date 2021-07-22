@@ -18,8 +18,8 @@ def main():
 
 
 def dnsinprod(state1, state2):
-    state1 = Path(state1).resolve()
-    state2 = Path(state2).resolve()
+    state1 = Path(state1)
+    state2 = Path(state2)
 
     state1Data, header1 = dns.readState(state1)
     state2Data, header2 = dns.readState(state2)

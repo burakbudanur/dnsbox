@@ -59,7 +59,7 @@ def dnsprofile(
     mirror_y=False,
     savetxt=False,
 ):
-    state = Path(state).resolve()
+    state = Path(state)
     figuresDir = dns.createFiguresDir(state.parent)
 
     if not average:

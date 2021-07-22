@@ -31,10 +31,10 @@ module parameters
     logical :: LES = .false. , tilting = .false.
 
     !# Initiation
-    integer(i4) :: IC = -1     ! Initial condition 
+    integer(i4) :: IC = -1, &     ! Initial condition 
                                ! (-3 shapiro, -2 laminar, -1 random, 
                                !   0 state.{istart / i_save_fields)
-    integer(i8) :: i_start = 0 ! Starting time step  
+                   i_start = 0 ! Starting time step  
     integer(i8) :: random_seed = -1 ! -1 reads from /dev/urandom
     real(dp) :: random_energy = 0.1_dp, & ! (ekin_laminar) energy of the random IC
                 random_smooth = 0.9_dp, & ! smoothness factor for random IC
@@ -97,7 +97,6 @@ module parameters
     real(dp) :: ekin_lam, powerin_lam, dissip_lam
 
     ! Given 3x3 symmetric matrix M, entries M_{ij} will be used
-    ! TODO: perhaps create a data type for such matrices, if that's possible
     integer(i4), parameter, dimension(6) :: isym = (/1, 1, 1, 2, 2, 3/), &
                                             jsym = (/1, 2, 3, 2, 3, 3/)
     integer(i4) :: nsym(3,3)

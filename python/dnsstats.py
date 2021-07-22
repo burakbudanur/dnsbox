@@ -63,7 +63,7 @@ def dnsstats(
 
     dns.setPlotDefaults(tex=tex)
 
-    runDir = Path(runDir).resolve()
+    runDir = Path(runDir)
     figuresDir = dns.createFiguresDir(runDir)
 
     statsfile = "stat.gp"

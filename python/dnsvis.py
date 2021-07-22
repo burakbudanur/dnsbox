@@ -82,7 +82,7 @@ def dnsvis(
         pv.start_xvfb()
 
     pv.set_plot_theme("document")
-    state = Path(state).resolve()
+    state = Path(state)
     figuresDir = dns.createFiguresDir(state.parent)
     stateIn, headers = dns.readState(state)
 

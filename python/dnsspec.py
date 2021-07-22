@@ -41,7 +41,7 @@ def main():
     )
 
     args = vars(parser.parse_args())
-    statePath = Path(args["statePath"]).resolve()
+    statePath = Path(args["statePath"])
     tex = args["tex"]
     noshow = args["noshow"]
     harmonics = args["harmonics"]
@@ -163,7 +163,7 @@ def main():
 
 def dnsspec(statePath, iso=False):
 
-    statePath = Path(statePath).resolve()
+    statePath = Path(statePath)
     state, header = dns.readState(statePath)
     forcing, nx, ny, nz, Lx, Lz, Re, tilt_angle, dt, itime, time = header
     nxp, nyp, nzp = nx // 2 - 1, ny // 2 - 1, nz // 2 - 1
