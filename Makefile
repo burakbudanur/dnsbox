@@ -1,12 +1,9 @@
-# Assumes fftw3, lapack and BLAS are installed to HOMELOCAL, 
-# if not already within the paths the compiler looks for
-MPIF90 = mpifort
-# -Warray-temporaries
-FCFLAGS = -ffpe-trap=invalid,zero,overflow -Wall -Wextra \
-		  -Wno-missing-include-dirs -fimplicit-none -fexternal-blas \
-		  -ffree-line-length-none -x f95-cpp-input -flto -c -O3 -m64 \
-		  -I${HOMELOCAL}/include -I/usr/include
-LDFLAGS = -L${HOMELOCAL}/lib -L/usr/local -lfftw3 -lblas -llapack
+MPIF90 = mpiifort
+GFORTRAN = ifort
+# See https://software.intel.com/content/www/us/en/develop/articles/determining-root-cause-of-sigsegv-or-sigbus-errors.html
+# for an explanation for -heap-arrays
+FCFLAGS = -O3 -mkl -heap-arrays -fpp -fp-model consistent -I${MKL_HOME}/include/fftw
+LDFLAGS = -L${MKL_HOME}/lib/intel64
 
 # Modules
 MODULES = numbers.o\
@@ -28,44 +25,28 @@ MODULES = numbers.o\
 		  run.o\
 		  solver.o
 
-# Objects
-
 UTILS 	= utilities/newton.o\
           utilities/eigen.o
 
-# -------------------------------------------------------
-
-all:  $(MODULES) main.o 
-	  $(MPIF90) $(MODULES) main.o  -o dns.x $(LDFLAGS)
-
-# -------------------------------------------------------
+all:  $(MODULES)
+	  $(MPIF90) $(FCFLAGS) -o dns.x main.f90 $(MODULES) $(LDFLAGS)
 
 utils: $(MODULES) $(UTILS)
-	   $(MPIF90) $(MODULES) newton.o -o newton.x $(LDFLAGS)
-	   $(MPIF90) $(MODULES) eigen.o -o eigen.x $(LDFLAGS)
-	   
-# -------------------------------------------------------
+	   $(MPIF90) $(FCFLAGS) -o newton.x utilities/newton.f90 $(MODULES) $(LDFLAGS)
+	   $(MPIF90) $(FCFLAGS) -o eigen.x utilities/eigen.f90 $(MODULES) $(LDFLAGS)
 
-test: $(MODULES) test.o
-	  $(MPIF90) $(MODULES) test.o  -o test.x $(LDFLAGS)
-	  rm -rf test 
-	  mkdir test
-	  cp parameters.in test
-	  cp test.x test
-	  cd test; ./test.x; cat d0000.txt
+#compile
 
-# -------------------------------------------------------
-
-# compile
+# $(OBJ): $(MODULES) 
 
 %.o: %.f
-	$(MPIF90) $(FCFLAGS) $<
+	$(MPIF90) -c $(FCFLAGS)  $<
 
-parameters.o: parameters.f90
-			  bash version.sh && $(MPIF90) $(FCFLAGS) $<
+m_parameters.o: m_parameters.f90
+		bash version.sh && $(MPIF90) -c $(FCFLAGS) $<
 
 %.o: %.f90
-	 $(MPIF90) $(FCFLAGS) $<
+	$(MPIF90) -c $(FCFLAGS) $<
 
 clean:
 	rm *.o *.mod *.x

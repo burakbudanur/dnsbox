@@ -32,8 +32,8 @@ all:  $(MODULES)
 	  $(MPIF90) $(FCFLAGS) -o dns.x main.f90 $(MODULES) $(LDFLAGS)
 
 utils: $(MODULES) $(UTILS)
-	   $(MPIF90) $(FCFLAGS) -o newton.x newton.f90 $(MODULES) $(LDFLAGS)
-	   $(MPIF90) $(FCFLAGS) -o eigen.x eigen.f90 $(MODULES) $(LDFLAGS)
+	   $(MPIF90) $(FCFLAGS) -o newton.x utilities/newton.f90 $(MODULES) $(LDFLAGS)
+	   $(MPIF90) $(FCFLAGS) -o eigen.x utilities/eigen.f90 $(MODULES) $(LDFLAGS)
 
 #compile
 
