@@ -52,17 +52,17 @@ def main():
     ax.plot(
         wavenums_x[1:],
         drop_x[1:],
-        label="$\\max |{{\\bf u}}(n_x, n_y \\neq 0, n_z \\neq 0)|$",
+        label="$\\max_{{n_y \\neq 0,\\, n_z \\neq 0}} |{{\\bf u}}(n, n_y, n_z)|$",
     )
     ax.plot(
         wavenums_y[1:],
         drop_y[1:],
-        label="$\\max |{{\\bf u}}(n_x \\neq 0, n_y, n_z \\neq 0)|$",
+        label="$\\max_{{n_x \\neq 0,\\, n_z \\neq 0}} |{{\\bf u}}(n_x, n, n_z)|$",
     )
     ax.plot(
         wavenums_z[1:],
         drop_z[1:],
-        label="$\\max |{{\\bf u}}(n_x \\neq 0, n_y \\neq 0, n_z)|$",
+        label="$\\max_{{n_x \\neq 0,\\, n_y \\neq 0}} |{{\\bf u}}(n_x, n_y, n)|$",
     )
     ax.grid(True, which="both")
     ax.set_xlabel("$n$")
