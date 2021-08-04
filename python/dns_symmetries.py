@@ -55,6 +55,30 @@ def TyHalfRepr(nx, ny_half, nz):
     return TyHalfRepr
 
 
+def Ty(dy, u, Lx, Lz):
+    """
+    Return the T_y(dy) image of a state
+    Warning: Not a symmetry of the Kolmogorov flow for all dy
+    """
+    
+    nx, ny_half, nz, _ = u.shape
+    kx, ky, kz = wavenumbers(Lx, Lz, nx, ny_half, nz)
+
+    image = np.zeros((nx, ny_half, nz, 3), dtype=np.complex128)
+    for j in range(0, ny_half):
+        ky = ky[j]
+        # Re part
+        image[:, j, :, :] = (
+            np.cos(ky * dy) * u[:, j, :, :].real + np.sin(ky * dy) * u[:, j, :, :].imag
+        )
+        # Im part
+        image[:, j, :, :] += 1j * (
+            -np.sin(ky * dy) * u[:, j, :, :].real + np.cos(ky * dy) * u[:, j, :, :].imag
+        )
+
+    return image
+
+
 def TzHalfRepr(nx, ny_half, nz):
     # Representation of T_z(L_z/2) on the states
 
