@@ -207,7 +207,7 @@ def Sx(u):
     return image
 
 
-def RyMid(u):
+def Sy(u):
     # Return the R_y T_y(L_y/2) image of a state
 
     nx, ny_half, nz, _ = u.shape
