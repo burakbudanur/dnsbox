@@ -31,11 +31,13 @@ def Tx(dx, u, Lx, Lz):
     for ix, kx in enumerate(kkx):
         # Re part
         image[ix, :, :, :] = (
-            np.cos(kx * dx) * u[ix, :, :, :].real + np.sin(kx * dx) * u[ix, :, :, :].imag
+            np.cos(kx * dx) * u[ix, :, :, :].real
+            + np.sin(kx * dx) * u[ix, :, :, :].imag
         )
         # Im part
         image[ix, :, :, :] += 1j * (
-            -np.sin(kx * dx) * u[ix, :, :, :].real + np.cos(kx * dx) * u[ix, :, :, :].imag
+            -np.sin(kx * dx) * u[ix, :, :, :].real
+            + np.cos(kx * dx) * u[ix, :, :, :].imag
         )
 
     return image
@@ -59,7 +61,7 @@ def Ty(dy, u, Lx, Lz):
     Return the T_y(dy) image of a state
     Warning: Not a symmetry of the Kolmogorov flow for all dy
     """
-    
+
     nx, ny_half, nz, _ = u.shape
     _, kky, _ = wavenumbers(Lx, Lz, nx, ny_half, nz)
 
@@ -68,11 +70,13 @@ def Ty(dy, u, Lx, Lz):
 
         # Re part
         image[:, iy, :, :] = (
-            np.cos(ky * dy) * u[:, iy, :, :].real + np.sin(ky * dy) * u[:, iy, :, :].imag
+            np.cos(ky * dy) * u[:, iy, :, :].real
+            + np.sin(ky * dy) * u[:, iy, :, :].imag
         )
         # Im part
         image[:, iy, :, :] += 1j * (
-            -np.sin(ky * dy) * u[:, iy, :, :].real + np.cos(ky * dy) * u[:, iy, :, :].imag
+            -np.sin(ky * dy) * u[:, iy, :, :].real
+            + np.cos(ky * dy) * u[:, iy, :, :].imag
         )
 
     return image
@@ -100,11 +104,13 @@ def Tz(dz, u, Lx, Lz):
 
         # Re part
         image[:, :, iz, :] = (
-            np.cos(kz * dz) * u[:, :, iz, :].real + np.sin(kz * dz) * u[:, :, iz, :].imag
+            np.cos(kz * dz) * u[:, :, iz, :].real
+            + np.sin(kz * dz) * u[:, :, iz, :].imag
         )
         # Im part
         image[:, :, iz, :] += 1j * (
-            -np.sin(kz * dz) * u[:, :, iz, :].real + np.cos(kz * dz) * u[:, :, iz, :].imag
+            -np.sin(kz * dz) * u[:, :, iz, :].real
+            + np.cos(kz * dz) * u[:, :, iz, :].imag
         )
 
     return image
