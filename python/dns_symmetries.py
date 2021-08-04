@@ -25,18 +25,17 @@ def Tx(dx, u, Lx, Lz):
     # Return the T_x(dx) image of a state
 
     nx, ny_half, nz, _ = u.shape
-    kx, ky, kz = wavenumbers(Lx, Lz, nx, ny_half, nz)
+    kkx, _, _ = wavenumbers(Lx, Lz, nx, ny_half, nz)
 
     image = np.zeros((nx, ny_half, nz, 3), dtype=np.complex128)
-    for i in range(0, nx):
-        kx = kx[i]
+    for ix, kx in enumerate(kkx):
         # Re part
-        image[i, :, :, :] = (
-            np.cos(kx * dx) * u[i, :, :, :].real + np.sin(kx * dx) * u[i, :, :, :].imag
+        image[ix, :, :, :] = (
+            np.cos(kx * dx) * u[ix, :, :, :].real + np.sin(kx * dx) * u[ix, :, :, :].imag
         )
         # Im part
-        image[i, :, :, :] += 1j * (
-            -np.sin(kx * dx) * u[i, :, :, :].real + np.cos(kx * dx) * u[i, :, :, :].imag
+        image[ix, :, :, :] += 1j * (
+            -np.sin(kx * dx) * u[ix, :, :, :].real + np.cos(kx * dx) * u[ix, :, :, :].imag
         )
 
     return image
@@ -62,18 +61,18 @@ def Ty(dy, u, Lx, Lz):
     """
     
     nx, ny_half, nz, _ = u.shape
-    kx, ky, kz = wavenumbers(Lx, Lz, nx, ny_half, nz)
+    _, kky, _ = wavenumbers(Lx, Lz, nx, ny_half, nz)
 
     image = np.zeros((nx, ny_half, nz, 3), dtype=np.complex128)
-    for j in range(0, ny_half):
-        ky = ky[j]
+    for iy, ky in enumerate(kky):
+
         # Re part
-        image[:, j, :, :] = (
-            np.cos(ky * dy) * u[:, j, :, :].real + np.sin(ky * dy) * u[:, j, :, :].imag
+        image[:, iy, :, :] = (
+            np.cos(ky * dy) * u[:, iy, :, :].real + np.sin(ky * dy) * u[:, iy, :, :].imag
         )
         # Im part
-        image[:, j, :, :] += 1j * (
-            -np.sin(ky * dy) * u[:, j, :, :].real + np.cos(ky * dy) * u[:, j, :, :].imag
+        image[:, iy, :, :] += 1j * (
+            -np.sin(ky * dy) * u[:, iy, :, :].real + np.cos(ky * dy) * u[:, iy, :, :].imag
         )
 
     return image
@@ -94,18 +93,18 @@ def Tz(dz, u, Lx, Lz):
     # Return the T_z(dz) image of a state
 
     nx, ny_half, nz, _ = u.shape
-    kx, ky, kz = wavenumbers(Lx, Lz, nx, ny_half, nz)
+    _, _, kkz = wavenumbers(Lx, Lz, nx, ny_half, nz)
 
     image = np.zeros((nx, ny_half, nz, 3), dtype=np.complex128)
-    for k in range(nz):
-        kz = kz[k]
+    for iz, kz in enumerate(kkz):
+
         # Re part
-        image[:, :, k, :] = (
-            np.cos(kz * dz) * u[:, :, k, :].real + np.sin(kz * dz) * u[:, :, k, :].imag
+        image[:, :, iz, :] = (
+            np.cos(kz * dz) * u[:, :, iz, :].real + np.sin(kz * dz) * u[:, :, iz, :].imag
         )
         # Im part
-        image[:, :, k, :] += 1j * (
-            -np.sin(kz * dz) * u[:, :, k, :].real + np.cos(kz * dz) * u[:, :, k, :].imag
+        image[:, :, iz, :] += 1j * (
+            -np.sin(kz * dz) * u[:, :, iz, :].real + np.cos(kz * dz) * u[:, :, iz, :].imag
         )
 
     return image
