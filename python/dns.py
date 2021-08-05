@@ -17,7 +17,7 @@ figuresDirName = "figures"
 
 Ly = 4.0
 qF = 1
-nStretch = 2
+nStretch = 3
 
 
 def isEven(N):
