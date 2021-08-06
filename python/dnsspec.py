@@ -8,10 +8,6 @@ from tqdm import tqdm
 
 import dns
 
-# harcoded dropoff harmonics
-dnki = 1
-dnkf = 0
-
 
 def main():
     parser = argparse.ArgumentParser("Computes direction-dependent spectra.")
@@ -182,7 +178,6 @@ def main():
     ax.set_xscale("log")
     ax.set_yscale("log")
     fig.savefig(figuresDir / f"{statePath.name}_spec_x_log.png")
-    # print("dropoff-x", np.sqrt(spec_x[dnki] / spec_x[-1 + dnkf]))
 
     k_spec_x = np.zeros((spec_x.shape[0], 2))
     k_spec_x[:, 0] = wavenums_x
@@ -210,8 +205,6 @@ def main():
     if savetxt:
         np.savetxt(figuresDir / f"{statePath.name}_spec_y.dat", k_spec_y)
 
-    # print("dropoff-y", np.sqrt(spec_y[dnki] / spec_y[-1 + dnkf]))
-
     fig, ax = plt.subplots()
     ax.plot(wavenums_z[1:], spec_z[1:])
     ax.grid(True, which="both")
@@ -225,7 +218,6 @@ def main():
     ax.set_xscale("log")
     ax.set_yscale("log")
     fig.savefig(figuresDir / f"{statePath.name}_spec_z_log.png")
-    # print("dropoff-z", np.sqrt(spec_z[dnki] / spec_z[-1 + dnkf]))
 
     k_spec_z = np.zeros((spec_z.shape[0], 2))
     k_spec_z[:, 0] = wavenums_z
@@ -321,8 +313,7 @@ def dnsspec(state, header, iso=False, compute_dissipation=False):
                         spec_iso[k_iso] = part
 
     if compute_dissipation:
-        vorticity = dns.vorticity(state, Lx, Lz)
-        dissipation = 2 * dns.inprod(vorticity, vorticity) / Re
+        dissipation = dns.dissipation(state, Lx, Lz, Re)
     else:
         dissipation = None
 

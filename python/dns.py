@@ -764,6 +764,13 @@ def vorticity(state, Lx, Lz):
     return out
 
 
+def dissipation(state, Lx, Lz, Re):
+    vor = vorticity(state, Lx, Lz)
+    diss = 2 * inprod(vor, vor) / Re
+
+    return diss
+
+
 def fftSpecToPhys(subState, supersample=False):
     nx, ny_half, nz = subState.shape
     nxp, nzp = nx // 2 - 1, nz // 2 - 1
@@ -918,5 +925,5 @@ def laminar(forcing, nx, ny_half, nz, tilt_angle=0.0):
 
     if abs(tilt_angle) > 0:
         state = tilt_state(state, tilt_angle)
-    
+
     return state
