@@ -122,7 +122,6 @@ def main():
     )
 
     # streamwise velocity, shearwise midplane
-    scale = np.amax(np.abs(velx_midy))
     figVelMid, axVelMid = plt.subplots()
     cVelMid = axVelMid.imshow(
         velx_midy.T,
@@ -145,7 +144,6 @@ def main():
     )
 
     # streamwise vorticity, shearwise midplane
-    scale = np.amax(np.abs(vorx_midy))
     figVorMid, axVorMid = plt.subplots()
     cVorMid = axVorMid.imshow(
         vorx_midy.T,
@@ -168,7 +166,6 @@ def main():
     )
 
     # streamwise velocity, spanwise midplane
-    scale = np.amax(np.abs(velx_midz))
     figVelMidZ, axVelMidZ = plt.subplots()
     cVelMidZ = axVelMidZ.imshow(
         velx_midz.T,
@@ -191,7 +188,6 @@ def main():
     )
 
     # streamwise vorticity, spanwise midplane
-    scale = np.amax(np.abs(vorx_midz))
     figVorMidZ, axVorMidZ = plt.subplots()
     cVorMidZ = axVorMidZ.imshow(
         vorx_midz.T,
@@ -258,8 +254,6 @@ def dnsimshow(
     else:
         nz_display = nz // 2 + 1
         midz = nz // 4
-
-    results = {}
 
     # mid-y
     velx_midy = velx[:, midy, :nz_display]
