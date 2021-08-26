@@ -47,14 +47,10 @@ def main():
         help="average multiple states.",
     )
     parser.add_argument(
-        "--si",
-        type=int,
-        help="initial state to average.",
+        "--si", type=int, help="initial state to average.",
     )
     parser.add_argument(
-        "--sf",
-        type=int,
-        help="final state to average.",
+        "--sf", type=int, help="final state to average.",
     )
 
     args = vars(parser.parse_args())
@@ -70,15 +66,9 @@ def main():
 
     if not average:
         state, header = dns.readState(statePath)
-        (
-            spec_x,
-            spec_y,
-            spec_z,
-            Lx,
-            Lz,
-            spec_iso,
-            dissipation,
-        ) = dnsspec(state, header, iso=iso, compute_dissipation=False)
+        (spec_x, spec_y, spec_z, Lx, Lz, spec_iso, dissipation,) = dnsspec(
+            state, header, iso=iso, compute_dissipation=False
+        )
     else:
         nstates = sf - si + 1
 
@@ -104,15 +94,9 @@ def main():
         for i in tqdm(range(si, sf + 1)):
             state_i = statePath / f"state.{str(i).zfill(6)}"
             state, header = dns.readState(state_i)
-            (
-                spec_x,
-                spec_y,
-                spec_z,
-                Lx,
-                Lz,
-                spec_iso,
-                dissipation,
-            ) = dnsspec(state - state_avg, header, iso=iso, compute_dissipation=True)
+            (spec_x, spec_y, spec_z, Lx, Lz, spec_iso, dissipation,) = dnsspec(
+                state - state_avg, header, iso=iso, compute_dissipation=True
+            )
             if specs_x is None:
                 specs_x = spec_x
             else:
@@ -160,13 +144,12 @@ def main():
 
     if savetxt and average:
         np.savetxt(
-            figuresDir / f"{statePath.name}_dissipation.dat",
-            np.array([dissipation]),
+            figuresDir / f"{statePath.name}_dissipation.dat", np.array([dissipation]),
         )
 
     # log log versions
     fig, ax = plt.subplots()
-    ax.plot(wavenums_x[1:], spec_x[1:])
+    ax.plot(wavenums_x[1:], np.sum(spec_x[1:, :], axis=1))
     ax.grid(True, which="both")
     if not harmonics:
         ax.set_xlabel(f"$k_x$")
@@ -179,14 +162,14 @@ def main():
     ax.set_yscale("log")
     fig.savefig(figuresDir / f"{statePath.name}_spec_x_log.png")
 
-    k_spec_x = np.zeros((spec_x.shape[0], 2))
+    k_spec_x = np.zeros((spec_x.shape[0], 4))
     k_spec_x[:, 0] = wavenums_x
-    k_spec_x[:, 1] = spec_x
+    k_spec_x[:, 1:] = spec_x
     if savetxt:
         np.savetxt(figuresDir / f"{statePath.name}_spec_x.dat", k_spec_x)
 
     fig, ax = plt.subplots()
-    ax.plot(wavenums_y[1:], spec_y[1:])
+    ax.plot(wavenums_y[1:], np.sum(spec_y[1:, :], axis=1))
     ax.grid(True, which="both")
     if not harmonics:
         ax.set_xlabel(f"$k_y$")
@@ -199,14 +182,14 @@ def main():
     ax.set_yscale("log")
     fig.savefig(figuresDir / f"{statePath.name}_spec_y_log.png")
 
-    k_spec_y = np.zeros((spec_y.shape[0], 2))
+    k_spec_y = np.zeros((spec_y.shape[0], 4))
     k_spec_y[:, 0] = wavenums_y
-    k_spec_y[:, 1] = spec_y
+    k_spec_y[:, 1:] = spec_y
     if savetxt:
         np.savetxt(figuresDir / f"{statePath.name}_spec_y.dat", k_spec_y)
 
     fig, ax = plt.subplots()
-    ax.plot(wavenums_z[1:], spec_z[1:])
+    ax.plot(wavenums_z[1:], np.sum(spec_z[1:, :], axis=1))
     ax.grid(True, which="both")
     if not harmonics:
         ax.set_xlabel(f"$k_z$")
@@ -219,15 +202,15 @@ def main():
     ax.set_yscale("log")
     fig.savefig(figuresDir / f"{statePath.name}_spec_z_log.png")
 
-    k_spec_z = np.zeros((spec_z.shape[0], 2))
+    k_spec_z = np.zeros((spec_z.shape[0], 4))
     k_spec_z[:, 0] = wavenums_z
-    k_spec_z[:, 1] = spec_z
+    k_spec_z[:, 1:] = spec_z
     if savetxt:
         np.savetxt(figuresDir / f"{statePath.name}_spec_z.dat", k_spec_z)
 
     if iso:
         fig, ax = plt.subplots()
-        ax.plot(spec_iso[:, 0], spec_iso[:, 1])
+        ax.plot(spec_iso[:, 0], np.sum(spec_iso[:, 1:], axis=1))
         if average:
             ax.plot(
                 spec_iso[:, 0],
@@ -258,9 +241,9 @@ def dnsspec(state, header, iso=False, compute_dissipation=False):
     forcing, nx, ny, nz, Lx, Lz, Re, tilt_angle, dt, itime, time = header
     nxp, nyp, nzp = nx // 2 - 1, ny // 2 - 1, nz // 2 - 1
 
-    spec_x = np.zeros((nxp + 1))
-    spec_y = np.zeros((nyp + 1))
-    spec_z = np.zeros((nzp + 1))
+    spec_x = np.zeros((nxp + 1, 3))
+    spec_y = np.zeros((nyp + 1, 3))
+    spec_z = np.zeros((nzp + 1, 3))
 
     if iso:
         spec_iso = {}
@@ -288,15 +271,15 @@ def dnsspec(state, header, iso=False, compute_dissipation=False):
                 if kz == nzp + 1:
                     continue
 
-                part = (np.sum(np.conj(state[i, j, k, :]) * state[i, j, k, :])).real
+                part = (np.conj(state[i, j, k, :]) * state[i, j, k, :]).real
 
                 # Correct for double counting (Hermiticity)
                 if ky == 0:
                     part = part / 2
 
-                spec_x[kx] += part
-                spec_y[ky] += part
-                spec_z[kz] += part
+                spec_x[kx, :] += part
+                spec_y[ky, :] += part
+                spec_z[kz, :] += part
 
                 # isotropic spectrum
                 if iso and not (kx == 0 and ky == 0 and kz == 0):
@@ -318,11 +301,11 @@ def dnsspec(state, header, iso=False, compute_dissipation=False):
         dissipation = None
 
     if iso:
-        spec_iso_ = np.zeros((len(spec_iso), 2), dtype=np.float64)
+        spec_iso_ = np.zeros((len(spec_iso), 4), dtype=np.float64)
         i = 0
         for key, value in spec_iso.items():
             spec_iso_[i, 0] = key * _kmin
-            spec_iso_[i, 1] = value
+            spec_iso_[i, 1:] = value
             i += 1
 
         sorter = np.argsort(spec_iso_[:, 0])
