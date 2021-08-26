@@ -46,19 +46,19 @@ def main():
         dest="diet",
         help="plot only energy and input-dissipation.",
     )
+    parser.add_argument(
+        "--lines",
+        action="store_true",
+        dest="lines",
+        help="use line numbers in place of time.",
+    )
     args = vars(parser.parse_args())
 
     dnsstats(**args)
 
 
 def dnsstats(
-    runDir,
-    Ni,
-    Nf,
-    tfilter=False,
-    noshow=False,
-    tex=False,
-    diet=False,
+    runDir, Ni, Nf, tfilter=False, noshow=False, tex=False, diet=False, lines=False,
 ):
 
     dns.setPlotDefaults(tex=tex)
@@ -99,17 +99,19 @@ def dnsstats(
     Elam = 1 / 4
     Edotlam = np.pi ** 2 / (8 * Re)
     stats = stats[Ni:Nf]
-    time = stats[:, 1]
+    if lines:
+        time = np.arange(len(stats))
+    else:
+        time = stats[:, 1]
     KineticEnergy = stats[:, 2] / Elam
     Production = stats[:, 3] / Edotlam
     Dissipation = stats[:, 4] / Edotlam
     normRHS = stats[:, 5]
-    # Courant = stats[:, 6]
-    # ncorr = stats[:, 7]
-    # err_corr = stats[:, 8]
-    # dt = stats[:, 9]
 
-    timeLabel = "$t$"
+    if lines:
+        timeLabel = "$i$"
+    else:
+        timeLabel = "$t$"
     ekinLabel = "$E / E_L$"
     prodLabel = "$I / I_L$"
     dissLabel = "$\\epsilon / \\epsilon_L$"
@@ -153,7 +155,10 @@ def dnsstats(
 
         if Path.is_file(runDir / stepsfile):
             steps = np.loadtxt(runDir / stepsfile, ndmin=2)
-            time = steps[:, 1]
+            if lines:
+                time = np.arange(len(steps))
+            else:
+                time = steps[:, 1]
             dt = steps[:, 2]
             courant = steps[:, 3]
             err_corr = steps[:, 4]
