@@ -8,13 +8,13 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import dns
 
-cmap = "Spectral"
+cmap = "Greys"
 
 
 def main():
 
     parser = argparse.ArgumentParser(
-        description="Produce 2D visualizations of velocity and vorticity fields.",
+        description="Produce 2D visualizations of the velocity field.",
     )
     parser.add_argument("state", type=str, help="path to the state.")
     parser.add_argument(
@@ -60,7 +60,8 @@ def main():
     results, headers, data = dnsimshow(
         state, undotilt=undotilt, sublam=sublam, mirror_y=mirror_y, mirror_z=mirror_z
     )
-    velx_midy, vorx_midy, velx_midz, vorx_midz = results
+    # velx_midy, vorx_midy, velx_midz, vorx_midz = results
+    velx_midy, velx_midz = results
     forcing, nx, ny, nz, Lx, Lz, Re, tilt_angle, dt, itime, time = headers
     uw_untilted, ny_display, nz_display = data
 
@@ -95,31 +96,33 @@ def main():
     figuresDir = dns.createFiguresDir(state.parent)
 
     # get the color scales
-    min_velx_midy, min_vorx_midy, min_velx_midz, min_vorx_midz = (
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-    )
-    max_velx_midy, max_vorx_midy, max_velx_midz, max_vorx_midz = (
-        -np.inf,
-        -np.inf,
-        -np.inf,
-        -np.inf,
-    )
-    min_velx_midy, min_vorx_midy, min_velx_midz, min_vorx_midz = (
-        min(min_velx_midy, np.amin(velx_midy)),
-        min(min_vorx_midy, np.amin(vorx_midy)),
-        min(min_velx_midz, np.amin(velx_midz)),
-        min(min_vorx_midz, np.amin(vorx_midz)),
+
+    # min_velx_midy, min_vorx_midy, min_velx_midz, min_vorx_midz = (
+    #     np.amin(velx_midy),
+    #     np.amin(vorx_midy),
+    #     np.amin(velx_midz),
+    #     np.amin(vorx_midz),
+    # )
+
+    # max_velx_midy, max_vorx_midy, max_velx_midz, max_vorx_midz = (
+    #     np.amax(velx_midy),
+    #     np.amax(vorx_midy),
+    #     np.amax(velx_midz),
+    #     np.amax(vorx_midz),
+    # )
+
+    min_velx_midy, min_velx_midz = (
+        np.amin(velx_midy),
+        np.amin(velx_midz),
     )
 
-    max_velx_midy, max_vorx_midy, max_velx_midz, max_vorx_midz = (
-        max(max_velx_midy, np.amax(velx_midy)),
-        max(max_vorx_midy, np.amax(vorx_midy)),
-        max(max_velx_midz, np.amax(velx_midz)),
-        max(max_vorx_midz, np.amax(vorx_midz)),
+    max_velx_midy, max_velx_midz = (
+        np.amax(velx_midy),
+        np.amax(velx_midz),
     )
+
+    scale_velx_midy = max(abs(min_velx_midy), abs(max_velx_midy))
+    scale_velx_midz = max(abs(min_velx_midz), abs(max_velx_midz))
 
     # streamwise velocity, shearwise midplane
     figVelMid, axVelMid = plt.subplots()
@@ -128,8 +131,8 @@ def main():
         cmap=cmap,
         aspect="equal",
         origin="lower",
-        vmin=min_velx_midy,
-        vmax=max_velx_midy,
+        vmin=-scale_velx_midy,
+        vmax=scale_velx_midy,
         interpolation="spline16",
         extent=[xs[0], xs[-1], zs[0], zs[-1]],
     )
@@ -143,27 +146,27 @@ def main():
         figuresDir / f"{state.name}_velocity_midy.png", bbox_inches="tight"
     )
 
-    # streamwise vorticity, shearwise midplane
-    figVorMid, axVorMid = plt.subplots()
-    cVorMid = axVorMid.imshow(
-        vorx_midy.T,
-        cmap=cmap,
-        aspect="equal",
-        origin="lower",
-        vmin=min_vorx_midy,
-        vmax=max_vorx_midy,
-        interpolation="spline16",
-        extent=[xs[0], xs[-1], zs[0], zs[-1]],
-    )
-    axVorMid.set_xlabel(xLabel)
-    axVorMid.set_ylabel(zLabel)
-    axVorMid.set_xlim(left=xs[0], right=xs[-1])
-    axVorMid.set_ylim(bottom=zs[0], top=zs[-1])
-    axVorMid.set_title(title)
-    colorbar(axVorMid, cVorMid, label=f"$\\omega(y={yMid})$")
-    figVorMid.savefig(
-        figuresDir / f"{state.name}_vorticity_midy.png", bbox_inches="tight"
-    )
+    # # streamwise vorticity, shearwise midplane
+    # figVorMid, axVorMid = plt.subplots()
+    # cVorMid = axVorMid.imshow(
+    #     vorx_midy.T,
+    #     cmap=cmap,
+    #     aspect="equal",
+    #     origin="lower",
+    #     vmin=min_vorx_midy,
+    #     vmax=max_vorx_midy,
+    #     interpolation="spline16",
+    #     extent=[xs[0], xs[-1], zs[0], zs[-1]],
+    # )
+    # axVorMid.set_xlabel(xLabel)
+    # axVorMid.set_ylabel(zLabel)
+    # axVorMid.set_xlim(left=xs[0], right=xs[-1])
+    # axVorMid.set_ylim(bottom=zs[0], top=zs[-1])
+    # axVorMid.set_title(title)
+    # colorbar(axVorMid, cVorMid, label=f"$\\omega(y={yMid})$")
+    # figVorMid.savefig(
+    #     figuresDir / f"{state.name}_vorticity_midy.png", bbox_inches="tight"
+    # )
 
     # streamwise velocity, spanwise midplane
     figVelMidZ, axVelMidZ = plt.subplots()
@@ -172,8 +175,8 @@ def main():
         cmap=cmap,
         aspect="equal",
         origin="lower",
-        vmin=min_velx_midz,
-        vmax=max_velx_midz,
+        vmin=-scale_velx_midz,
+        vmax=scale_velx_midz,
         interpolation="spline16",
         extent=[xs[0], xs[-1], ys[0], ys[-1]],
     )
@@ -187,38 +190,34 @@ def main():
         figuresDir / f"{state.name}_velocity_midz.png", bbox_inches="tight"
     )
 
-    # streamwise vorticity, spanwise midplane
-    figVorMidZ, axVorMidZ = plt.subplots()
-    cVorMidZ = axVorMidZ.imshow(
-        vorx_midz.T,
-        cmap=cmap,
-        aspect="equal",
-        origin="lower",
-        vmin=min_vorx_midz,
-        vmax=max_vorx_midz,
-        interpolation="spline16",
-        extent=[xs[0], xs[-1], ys[0], ys[-1]],
-    )
-    axVorMidZ.set_xlabel(xLabel)
-    axVorMidZ.set_ylabel(yLabel)
-    axVorMidZ.set_xlim(left=xs[0], right=xs[-1])
-    axVorMidZ.set_ylim(bottom=ys[0], top=ys[-1])
-    axVorMidZ.set_title(title)
-    colorbar(axVorMidZ, cVorMidZ, label=f"$\\omega(z={zMid})$")
-    figVorMidZ.savefig(
-        figuresDir / f"{state.name}_vorticity_midz.png", bbox_inches="tight"
-    )
+    # # streamwise vorticity, spanwise midplane
+    # figVorMidZ, axVorMidZ = plt.subplots()
+    # cVorMidZ = axVorMidZ.imshow(
+    #     vorx_midz.T,
+    #     cmap=cmap,
+    #     aspect="equal",
+    #     origin="lower",
+    #     vmin=min_vorx_midz,
+    #     vmax=max_vorx_midz,
+    #     interpolation="spline16",
+    #     extent=[xs[0], xs[-1], ys[0], ys[-1]],
+    # )
+    # axVorMidZ.set_xlabel(xLabel)
+    # axVorMidZ.set_ylabel(yLabel)
+    # axVorMidZ.set_xlim(left=xs[0], right=xs[-1])
+    # axVorMidZ.set_ylim(bottom=ys[0], top=ys[-1])
+    # axVorMidZ.set_title(title)
+    # colorbar(axVorMidZ, cVorMidZ, label=f"$\\omega(z={zMid})$")
+    # figVorMidZ.savefig(
+    #     figuresDir / f"{state.name}_vorticity_midz.png", bbox_inches="tight"
+    # )
 
     if not noshow:
         plt.show()
 
 
 def dnsimshow(
-    state,
-    undotilt=False,
-    sublam=False,
-    mirror_y=False,
-    mirror_z=False,
+    state, undotilt=False, sublam=False, mirror_y=False, mirror_z=False,
 ):
     state = Path(state)
 
@@ -236,11 +235,11 @@ def dnsimshow(
         stateIn = dns.tilt_state(stateIn, tilt_angle)
 
     vel_phys = dns.fftSpecToPhysAll(stateIn)
-    vor_spec = dns.vorticity(stateIn, Lx, Lz)
-    vor_phys = dns.fftSpecToPhysAll(vor_spec)
+    # vor_spec = dns.vorticity(stateIn, Lx, Lz)
+    # vor_phys = dns.fftSpecToPhysAll(vor_spec)
 
     velx = vel_phys[:, :, :, 0]
-    vorx = vor_phys[:, :, :, 0]
+    # vorx = vor_phys[:, :, :, 0]
 
     if not mirror_y:
         ny_display = ny
@@ -257,13 +256,14 @@ def dnsimshow(
 
     # mid-y
     velx_midy = velx[:, midy, :nz_display]
-    vorx_midy = vorx[:, midy, :nz_display]
+    # vorx_midy = vorx[:, midy, :nz_display]
 
     # mid-z
     velx_midz = velx[:, :ny_display, midz]
-    vorx_midz = vorx[:, :ny_display, midz]
+    # vorx_midz = vorx[:, :ny_display, midz]
 
-    results = velx_midy, vorx_midy, velx_midz, vorx_midz
+    # results = velx_midy, vorx_midy, velx_midz, vorx_midz
+    results = velx_midy, velx_midz
     data = uw_untilted, ny_display, nz_display
 
     return results, headers, data
