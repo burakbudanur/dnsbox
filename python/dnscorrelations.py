@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from numpy.lib.npyio import save
 from tqdm.auto import tqdm
 
 import dns
@@ -52,6 +53,12 @@ def main():
         dest="savetxt",
         help="save results as text files",
     )
+    parser.add_argument(
+        "--loadtxt",
+        action="store_true",
+        dest="loadtxt",
+        help="load results.",
+    )
     args = vars(parser.parse_args())
 
     statesPath = Path(args["statesPath"])
@@ -62,56 +69,69 @@ def main():
     mirror_y = args["mirror_y"]
     mirror_z = args["mirror_z"]
     savetxt = args["savetxt"]
+    loadtxt = args["loadtxt"]
 
-    nstates = sf - si + 1
+    if loadtxt:
+        corrs_avg = np.loadtxt("corrs_avg.gp")
 
-    print("Finding the average state.")
-    state_avg = None
-    for i in tqdm(range(si, sf + 1)):
-        state_i = statesPath / f"state.{str(i).zfill(6)}"
-        state, header = dns.readState(state_i)
-        if state_avg is None:
-            state_avg = state
-        else:
-            state_avg += state
-    state_avg /= nstates
+    else:
 
-    print("Averaging over fluctuations.")
-    corrs_avg = None
+        nstates = sf - si + 1
 
-    for i in tqdm(range(si, sf + 1)):
-        state_i = statesPath / f"state.{str(i).zfill(6)}"
-        state, header = dns.readState(state_i)
-        forcing, nx, ny, nz, Lx, Lz, Re, tilt_angle, dt, itime, time = header
+        print("Finding the average state.")
+        state_avg = None
+        for i in tqdm(range(si, sf + 1)):
+            state_i = statesPath / f"state.{str(i).zfill(6)}"
+            state, header = dns.readState(state_i)
+            if state_avg is None:
+                state_avg = state
+            else:
+                state_avg += state
+        state_avg /= nstates
 
-        corrs, midy, nz_display = dnscorrelations(
-            state - state_avg, header, mirror_y=mirror_y, mirror_z=mirror_z
-        )
+        print("Averaging over fluctuations.")
+        corrs_avg = None
 
-        if corrs_avg is None:
-            corrs_avg = corrs
-        else:
-            corrs_avg += corrs
+        for i in tqdm(range(si, sf + 1)):
+            state_i = statesPath / f"state.{str(i).zfill(6)}"
+            state, header = dns.readState(state_i)
+            forcing, nx, ny, nz, Lx, Lz, Re, tilt_angle, dt, itime, time = header
 
-    corrs_avg = corrs_avg / nstates
+            corrs, midy, nz_display = dnscorrelations(
+                state - state_avg, header, mirror_y=mirror_y, mirror_z=mirror_z
+            )
+
+            if corrs_avg is None:
+                corrs_avg = corrs
+            else:
+                corrs_avg += corrs
+
+        corrs_avg = corrs_avg / nstates
+        if savetxt:
+            np.savetxt(statesPath / "corrs_avg.gp", corrs_avg)
+
     R_uu = corrs_avg / corrs_avg[0, 0]
 
-    if not noshow:
-        plt.show()
-
+    state_0 = statesPath / f"state.{str(si).zfill(6)}"
+    state, header = dns.readState(state_0)
     forcing, nx, ny, nz, Lx, Lz, Re, tilt_angle, dt, itime, time = header
+
+    if not mirror_y:
+        midy = ny // 2
+    else:
+        midy = ny // 4
+    if not mirror_z:
+        nz_display = nz
+    else:
+        nz_display = nz // 2 + 1
+
     title = f"$\\mathrm{{Re}}={Re:.1f}$, $L=({Lx:.1f},{dns.Ly:.1f},{Lz:.1f})$, $N=({nx},{ny},{nz})$"
 
     xs = np.array([i * (Lx / nx) for i in range(0, nx)])
     zs = np.array([k * (Lz / nz) for k in range(0, nz_display)])
 
-    xLabel = "$x$"
-    zLabel = "$z$"
-
     dns.setPlotDefaults(tex=tex)
     figuresDir = dns.createFiguresDir(statesPath.parent)
-
-    scale = max(abs(np.amin(R_uu)), abs(np.amax(R_uu)))
 
     fig, ax = plt.subplots()
     cbar = ax.imshow(
@@ -119,18 +139,21 @@ def main():
         cmap=cmap,
         aspect="equal",
         origin="lower",
-        vmin=-scale,
-        vmax=scale,
+        vmin=-1,
+        vmax=1,
         interpolation="spline16",
         extent=[xs[0], xs[-1], zs[0], zs[-1]],
     )
-    ax.set_xlabel(xLabel)
-    ax.set_ylabel(zLabel)
+    ax.set_xlabel("$r_x$")
+    ax.set_ylabel("$r_z$")
     ax.set_xlim(left=xs[0], right=xs[-1])
     ax.set_ylim(bottom=zs[0], top=zs[-1])
     ax.set_title(title)
-    colorbar(ax, cbar, label=f"$r(x,z)$")
+    colorbar(ax, cbar, label=f"$R_{{uu}}(r_x,0,r_z)$")
     fig.savefig(figuresDir / f"R_uu.png", bbox_inches="tight")
+
+    if not noshow:
+        plt.show()
 
 
 def dnscorrelations(
@@ -155,11 +178,10 @@ def dnscorrelations(
 
     velx_midy = velx[:, midy, :nz_display]
 
-    # u_avg = np.average(velx_midy)
-    corrs = np.zeros((nx, nz))
+    corrs = np.zeros((nx, nz_display))
 
     for ix in range(nx):
-        for iz in range(nz):
+        for iz in range(nz_display):
             u_roll = np.roll(velx_midy, shift=(-ix, -iz), axis=(0, 1))
             corrs[ix, iz] = np.average(velx_midy * u_roll)
 
