@@ -45,8 +45,7 @@ def main():
 
 def dnsscales(statesPath, si, sf, savetxt):
 
-    if type(statesPath) == str:
-        statesPath = Path(statesPath)
+    statesPath = Path(statesPath)
 
     nstates = sf - si + 1
 
