@@ -40,6 +40,14 @@ def main():
     sf = args["sf"]
     savetxt = args["savetxt"]
 
+    dnsscales(statesPath, si, sf, savetxt)
+
+
+def dnsscales(statesPath, si, sf, savetxt):
+
+    if type(statesPath) == str:
+        statesPath = Path(statesPath)
+
     nstates = sf - si + 1
 
     print("Finding the average state.")
@@ -86,9 +94,11 @@ def main():
     print("ϵ =", dissipation)
     print("<u'>_rms = ", urms)
 
-    scales = np.array([dissipation, urms])
+    turbulent_means = np.array([[dissipation, urms]])
     if savetxt:
-        np.savetxt(statesPath / "scales.gp", scales)
+        np.savetxt(statesPath / "turbulent_means.gp", 
+                   turbulent_means, 
+                   header="dissipation    u_rms")
 
     # Taylor microscale (\lambda)
     lambda_g = urms * np.sqrt(15 / (Re * dissipation))
@@ -106,6 +116,13 @@ def main():
     print("η =", eta)
     print("τ_η =", tau)
     print("u_η = ", ueta)
+
+    scales = np.array([[eta, tau, ueta]])
+
+    if savetxt:
+        np.savetxt(statesPath / "scales.gp", 
+                   scales, 
+                   header="eta    tau    u_eta")
 
 
 if __name__ == "__main__":
