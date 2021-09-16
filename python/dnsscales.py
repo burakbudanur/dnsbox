@@ -18,14 +18,10 @@ def main():
         help="path to the folder containing states of interest.",
     )
     parser.add_argument(
-        "si",
-        type=int,
-        help="initial state to average.",
+        "si", type=int, help="initial state to average.",
     )
     parser.add_argument(
-        "sf",
-        type=int,
-        help="final state to average.",
+        "sf", type=int, help="final state to average.",
     )
     parser.add_argument(
         "--savetxt",
@@ -35,15 +31,10 @@ def main():
     )
 
     args = vars(parser.parse_args())
-    statesPath = Path(args["statesPath"])
-    si = args["si"]
-    sf = args["sf"]
-    savetxt = args["savetxt"]
-
-    dnsscales(statesPath, si, sf, savetxt)
+    dnsscales(**args)
 
 
-def dnsscales(statesPath, si, sf, savetxt):
+def dnsscales(statesPath, si, sf, savetxt=False):
 
     statesPath = Path(statesPath)
 
@@ -95,9 +86,11 @@ def dnsscales(statesPath, si, sf, savetxt):
 
     turbulent_means = np.array([[dissipation, urms]])
     if savetxt:
-        np.savetxt(statesPath / "turbulent_means.gp", 
-                   turbulent_means, 
-                   header="dissipation    u_rms")
+        np.savetxt(
+            statesPath / "turbulent_means.gp",
+            turbulent_means,
+            header="dissipation    u_rms",
+        )
 
     # Taylor microscale (\lambda)
     lambda_g = urms * np.sqrt(15 / (Re * dissipation))
@@ -119,9 +112,11 @@ def dnsscales(statesPath, si, sf, savetxt):
     scales = np.array([[eta, tau, ueta, lambda_g, Re_lambda]])
 
     if savetxt:
-        np.savetxt(statesPath / "scales.gp", 
-                   scales, 
-                   header="eta    tau    u_eta    lambda    Re_lambda")
+        np.savetxt(
+            statesPath / "scales.gp",
+            scales,
+            header="eta    tau    u_eta    lambda    Re_lambda",
+        )
 
 
 if __name__ == "__main__":
