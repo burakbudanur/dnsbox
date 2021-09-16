@@ -116,12 +116,12 @@ def dnsscales(statesPath, si, sf, savetxt):
     print("τ_η =", tau)
     print("u_η = ", ueta)
 
-    scales = np.array([[eta, tau, ueta]])
+    scales = np.array([[eta, tau, ueta, lambda_g, Re_lambda]])
 
     if savetxt:
         np.savetxt(statesPath / "scales.gp", 
                    scales, 
-                   header="eta    tau    u_eta")
+                   header="eta    tau    u_eta    lambda    Re_lambda")
 
 
 if __name__ == "__main__":
