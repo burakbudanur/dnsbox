@@ -15,7 +15,7 @@ module lyap
     real(dp), allocatable :: lyap_vfieldxx(:, :, :, :)
 
     integer(i4) :: lyap_out
-    real(dp)    :: lambda_max, norm_perturbation, lyap_sum
+    real(dp)    :: lambda_max, norm_perturb, lyap_sum, norm_vel, norm_perturb_0
 
     character(255) :: lyap_out_format
     logical :: lyap_written = .false.
@@ -89,9 +89,12 @@ module lyap
 
             end if
 
-            call vfield_norm(lyap_vfieldk, norm_perturbation, .true.)
-            lyap_vfieldk = eps_lyap * lyap_vfieldk / norm_perturbation 
 
+            call vfield_norm(vel_vfieldk, norm_vel, .true.)
+            call vfield_norm(lyap_vfieldk, norm_perturb, .true.)
+
+            lyap_vfieldk =  norm_vel * eps_lyap * lyap_vfieldk / norm_perturb 
+            norm_perturb_0 = norm_vel * eps_lyap
 
             call fieldio_write(lyap_vfieldk)
             lyap_vfieldk = vel_vfieldk + lyap_vfieldk
@@ -119,11 +122,12 @@ module lyap
         if (mod(itime, i_lyap) == 0) then
 
             lyap_vfieldk = lyap_vfieldk - vel_vfieldk 
-            call vfield_norm(lyap_vfieldk, norm_perturbation, .true.)
+            call vfield_norm(vel_vfieldk, norm_vel, .true.)
+            call vfield_norm(lyap_vfieldk, norm_perturb, .true.)
             
             if (time > trans_lyap) then
 
-                growth = norm_perturbation / eps_lyap 
+                growth = norm_perturb / norm_perturb_0
                 lyap_sum = lyap_sum + log(growth)
                 time_elapsed = time - trans_lyap
                 lambda_max = lyap_sum / time_elapsed
@@ -141,8 +145,9 @@ module lyap
     
             end if
 
-            lyap_vfieldk = eps_lyap * lyap_vfieldk / norm_perturbation
+            lyap_vfieldk = norm_vel * eps_lyap * lyap_vfieldk / norm_perturb
             lyap_vfieldk = vel_vfieldk + lyap_vfieldk 
+            norm_perturb_0 = norm_vel * eps_lyap
 
         end if
 
