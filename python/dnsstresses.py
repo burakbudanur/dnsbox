@@ -123,6 +123,7 @@ def dnsstresses(statesPath, si, sf, savetxt=False, mirror_y=False, mirror_z=Fals
                     (state - state_avg)[:, :, :, i], j, Lx, Lz
                 )
 
+        # This should be dealiased!
         S_ij = np.zeros((nx, ny_display, nz_display, 3, 3), dtype=np.float64)
         for i in range(3):
             # this can be made faster by only using the symmetric component
