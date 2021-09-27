@@ -80,6 +80,18 @@ module lyap
             call fieldio_read(lyap_vfieldk)
             write(out, *) "lyap: Loading the perturbed field."
 
+            lyap_vfieldk = lyap_vfieldk - vel_vfieldk 
+
+            call vfield_norm(vel_vfieldk, norm_vel, .true.)
+            call vfield_norm(lyap_vfieldk, norm_perturb, .true.)
+
+            lyap_vfieldk =  norm_vel * eps_lyap * lyap_vfieldk / norm_perturb 
+            norm_perturb_0 = norm_vel * eps_lyap
+
+            lyap_vfieldk = vel_vfieldk + lyap_vfieldk
+            call fieldio_write(lyap_vfieldk)
+            call fftw_vk2x(lyap_vfieldk, lyap_vfieldxx)
+
         else
 
             call vfield_random(lyap_vfieldk, .true.)
@@ -96,8 +108,8 @@ module lyap
             lyap_vfieldk =  norm_vel * eps_lyap * lyap_vfieldk / norm_perturb 
             norm_perturb_0 = norm_vel * eps_lyap
 
-            call fieldio_write(lyap_vfieldk)
             lyap_vfieldk = vel_vfieldk + lyap_vfieldk
+            call fieldio_write(lyap_vfieldk)
             call fftw_vk2x(lyap_vfieldk, lyap_vfieldxx)
 
             write(out, *) "lyap: Generated a random perturbation field."
