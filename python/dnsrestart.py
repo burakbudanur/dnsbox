@@ -22,26 +22,27 @@ def main():
 
     args = vars(parser.parse_args())
 
-    dnscontinue(**args)
+    dnsrestart(**args)
 
 
-def dnscontinue(rundir, script):
+def dnsrestart(rundir, script):
 
     rundir = Path(rundir)
     parameters = dns.readParameters(rundir / "parameters.in")
     i_start =  parameters["initiation"]["i_start"]
+    ic =  parameters["initiation"]["ic"]
 
     states = sorted(list(rundir.glob("state.*")))
     perturbed_states = sorted(list(rundir.glob("perturb.*")))
 
     if len(states) > 0:
         for state in states:
-            if int(state.name[-6:]) > i_start:
+            if int(state.name[-6:]) > ic:
                 state.unlink()
 
     if len(perturbed_states) > 0:
         for state in perturbed_states:
-            if int(state.name[-6:]) > i_start:
+            if int(state.name[-6:]) > ic:
                 state.unlink()
 
     results = list(rundir.glob("*.gp"))
