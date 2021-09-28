@@ -14,7 +14,7 @@ def main():
         description="Delete states in a directory keeping every n. Rename states that are kept so that the remaining are state.000000, state.000001, ..., change parameters.in accordingly.",
     )
     parser.add_argument("rundir", type=str, help="path to the run")
-    parser.add_argument("n", type=int, help="path to the run")
+    parser.add_argument("n", type=int, help="states other than 0, n, 2n, ... will be deleted")
 
     args = vars(parser.parse_args())
 
