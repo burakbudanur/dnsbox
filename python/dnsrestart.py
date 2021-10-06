@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 from subprocess import call
 import numpy as np
+import os
 
 import dns
 
@@ -25,7 +26,7 @@ def main():
     dnsrestart(**args)
 
 
-def dnsrestart(rundir, script):
+def dnsrestart(rundir, script = None):
 
     rundir = Path(rundir)
     parameters = dns.readParameters(rundir / "parameters.in")

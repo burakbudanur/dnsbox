@@ -25,7 +25,7 @@ def main():
     dnscontinue(**args)
 
 
-def dnscontinue(rundir, script):
+def dnscontinue(rundir, script = None):
 
     rundir = Path(rundir)
 
