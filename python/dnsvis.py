@@ -195,8 +195,8 @@ def Q_criterion(
         for j in range(3):
             QQ += 0.5 * (Om_ij[:, :, :, i, j] ** 2) - 0.5 * (S_ij[:, :, :, i, j] ** 2)
 
-    if Q < np.max(QQ):
-        print("nothing to show") 
+    if Q > np.max(QQ):
+        print(f"nothing to show Q_level = {Q}, max Q = {np.max(QQ):6.4f} ") 
         return
 
     print(np.max(QQ))
