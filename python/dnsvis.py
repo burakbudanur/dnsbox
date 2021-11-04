@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import dns
 import pyvista as pv
-
+import dnstensors
 
 def main():
 
@@ -157,6 +157,73 @@ def dnsvis(
 
     p.show(screenshot=figuresDir / f"{state.name}_isosurf.png")
 
+
+def Q_criterion(
+    state,
+    noshow=False,
+    xvfb=False,
+    undotilt=False,
+    sublam=False,
+    Q = 0.1,
+):
+
+    if xvfb:
+        noshow = True
+        pv.start_xvfb()
+
+    pv.set_plot_theme("document")
+    state = Path(state)
+    figuresDir = dns.createFiguresDir(state.parent)
+    stateIn, header = dns.readState(state)
+
+    forcing, nx, ny, nz, Lx, Lz, Re, tilt_angle, dt, itime, time = header
+    ny_half = ny // 2
+
+    if sublam:
+        stateIn = stateIn - dns.laminar(forcing, nx, ny_half, nz, tilt_angle=tilt_angle)
+
+    uw_untilted = False
+    if abs(tilt_angle) > 0 and undotilt:
+        uw_untilted = True
+        stateIn = dns.tilt_state(stateIn, tilt_angle)
+    
+    S_ij, Om_ij = dnstensors.dnstensors(state)
+
+    QQ = np.zeros((nx, ny, nz), dtype=np.float64)
+
+    for i in range(3):
+        for j in range(3):
+            QQ += 0.5 * (Om_ij[:, :, :, i, j] ** 2) - 0.5 * (S_ij[:, :, :, i, j] ** 2)
+
+    if Q < np.max(QQ):
+        print("nothing to show") 
+        return
+
+    print(np.max(QQ))
+    QQpv = pv.wrap(QQ)
+
+    Q_level = np.array([Q])
+    p = pv.Plotter(off_screen=noshow)
+
+    p.add_mesh(QQpv.outline(), color="k")
+    p.add_mesh(
+        QQpv.contour(Q_level),
+        smooth_shading=True,
+        opacity=0.5,
+        show_scalar_bar=False,
+    )
+
+    p.show_axes()
+
+    #
+    p.camera.roll += 90
+    p.camera.elevation -= 15
+    p.camera.azimuth -= 45
+    p.camera.roll += 30
+    p.camera.azimuth -= 45
+    p.camera.roll -= 10
+
+    p.show(screenshot=figuresDir / f"{state.name}_isosurf.png")
 
 if __name__ == "__main__":
     main()
