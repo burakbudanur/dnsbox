@@ -40,13 +40,13 @@ utils: $(MODULES) $(UTILS)
 # $(OBJ): $(MODULES) 
 
 %.o: %.f
-	$(MPIF90) $(FCFLAGS)  $<
+	$(MPIF90) -c $(FCFLAGS)  $<
 
 parameters.o: parameters.f90
 		      bash version.sh && $(MPIF90) -c $(FCFLAGS) $<
 
 %.o: %.f90
-	$(MPIF90) $(FCFLAGS) $<
+	$(MPIF90) -c $(FCFLAGS) $<
 
 clean:
 	rm *.o *.mod *.x
