@@ -32,8 +32,8 @@ all:  $(MODULES) main.o
 	  $(MPIF90) $(FCFLAGS) main.o -o dns.x $(MODULES) $(LDFLAGS)
 
 utils: $(MODULES) $(UTILS)
-	   $(MPIF90) $(MODULES) newton.o -o newton.x $(LDFLAGS)
-	   $(MPIF90) $(MODULES) eigen.o -o eigen.x $(LDFLAGS)
+	   $(MPIF90) $(FCFLAGS) $(MODULES) newton.o -o newton.x $(LDFLAGS)
+	   $(MPIF90) $(FCFLAGS) $(MODULES) eigen.o -o eigen.x $(LDFLAGS)
 
 #compile
 
