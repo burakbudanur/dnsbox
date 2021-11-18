@@ -28,8 +28,8 @@ MODULES = numbers.o\
 UTILS 	= utilities/newton.o\
           utilities/eigen.o
 
-all:  $(MODULES)
-	  $(MPIF90) $(FCFLAGS) -o dns.x main.f90 $(MODULES) $(LDFLAGS)
+all:  $(MODULES) main.o
+	  $(MPIF90) $(FCFLAGS) main.o -o dns.x $(MODULES) $(LDFLAGS)
 
 utils: $(MODULES) $(UTILS)
 	   $(MPIF90) $(MODULES) newton.o -o newton.x $(LDFLAGS)
@@ -40,13 +40,13 @@ utils: $(MODULES) $(UTILS)
 # $(OBJ): $(MODULES) 
 
 %.o: %.f
-	$(MPIF90) -c $(FCFLAGS)  $<
+	$(MPIF90) $(FCFLAGS)  $<
 
-m_parameters.o: m_parameters.f90
-		bash version.sh && $(MPIF90) -c $(FCFLAGS) $<
+parameters.o: parameters.f90
+		      bash version.sh && $(MPIF90) -c $(FCFLAGS) $<
 
 %.o: %.f90
-	$(MPIF90) -c $(FCFLAGS) $<
+	$(MPIF90) $(FCFLAGS) $<
 
 clean:
 	rm *.o *.mod *.x
