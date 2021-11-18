@@ -4,7 +4,7 @@ module parameters
     use io
 
     ! DO NOT EDIT ABOVE THIS LINE
-    character(7), parameter :: revision = "61cc86a"
+    character(7), parameter :: revision = "dab667b"
 
     !# Geometry & discretization
     integer(i4) :: &
@@ -84,6 +84,7 @@ module parameters
 
     ! Lyapunov exponent
     logical :: compute_lyap = .false.
+    logical :: lyap_normalize = .true. 
     integer(i4) :: i_lyap 
     real(dp) :: eps_lyap, trans_lyap, k_cutoff
 
@@ -112,7 +113,7 @@ module parameters
     namelist /termination/ terminate_laminar, relerr_lam, wall_clock_limit, i_finish
     namelist /debugging/ log_divergence, divergence_th, shapiro_qalpha, shapiro_qbeta, shapiro_qgamma
     namelist /symmetries/ Rxy, Ry, Rz, Sx, Sy, slice
-    namelist /lyapunov/ compute_lyap, i_lyap, eps_lyap, trans_lyap, k_cutoff
+    namelist /lyapunov/ compute_lyap, lyap_normalize, i_lyap, eps_lyap, trans_lyap, k_cutoff
     namelist /projection/ num_proj_bases, subtract_origin
 
     contains 

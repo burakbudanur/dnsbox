@@ -70,6 +70,7 @@ log_divergence  = F  ! (T) Enable divergence logging
 
 &lyapunov
 compute_lyap = F   ! T: compute the maximal Lyapunov exponent 
+lyap_normalize = T ! F: turn off normalizing Lyapunov vectors
 i_lyap = 1000      ! delta t_{lyapunov} = i_lyapunov * dt
 eps_lyap = 1.0e-6  ! perturbation amplitude
 trans_lyap = 300   ! start estimating the exponent after this time

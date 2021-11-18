@@ -80,8 +80,7 @@ module lyap
             call fieldio_read(lyap_vfieldk)
             write(out, *) "lyap: Loading the perturbed field."
 
-            call vfield_norm(vel_vfieldk, norm_vel, .true.)
-            norm_perturb_0 = norm_vel * eps_lyap
+            call vfield_norm(lyap_vfieldk, norm_perturb_0, .true.)
             call fftw_vk2x(lyap_vfieldk, lyap_vfieldxx)
 
         else
@@ -92,7 +91,6 @@ module lyap
                 call vfield_truncate(k_cutoff, lyap_vfieldk)
 
             end if
-
 
             call vfield_norm(vel_vfieldk, norm_vel, .true.)
             call vfield_norm(lyap_vfieldk, norm_perturb, .true.)
@@ -148,10 +146,18 @@ module lyap
                 call vfield_truncate(k_cutoff, lyap_vfieldk)
     
             end if
+        
+            if (lyap_normalize) then
+                
+                lyap_vfieldk = norm_vel * eps_lyap * lyap_vfieldk / norm_perturb
+                lyap_vfieldk = vel_vfieldk + lyap_vfieldk 
+                norm_perturb_0 = norm_vel * eps_lyap
+            
+            else 
 
-            lyap_vfieldk = norm_vel * eps_lyap * lyap_vfieldk / norm_perturb
-            lyap_vfieldk = vel_vfieldk + lyap_vfieldk 
-            norm_perturb_0 = norm_vel * eps_lyap
+                norm_perturb_0 = norm_perturb
+
+            end if
 
         end if
 
