@@ -134,7 +134,7 @@ module lyap
 
                 growth = norm_perturb / norm_perturb_0
                 lyap_sum = lyap_sum + log(growth)
-                time_elapsed = time - trans_lyap
+                time_elapsed = (time - trans_lyap) + i_lyap * dt
                 lambda_max = lyap_sum / time_elapsed
                                
                 ! Write the estimates
