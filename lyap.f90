@@ -51,7 +51,7 @@ module lyap
                 end if
             end do            
             
-            time_elapsed  = time - trans_lyap
+            time_elapsed  = time - trans_lyap + i_lyap * dt
             lyap_sum = lambda_max * time_elapsed
             
             close(lyap_in)
