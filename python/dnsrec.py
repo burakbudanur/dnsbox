@@ -50,10 +50,10 @@ def dnsrec(rundir, si, sf, nrec, sliced):
     rundir = Path(rundir)
     rec_mat = np.zeros((sf - si + 1, nrec + 1))
 
-    for i in range(sf + 1 - si):
+    for i in tqdm(range(sf + 1 - si)):
 
         i_state = i + si
-        fstate_i = f"state:{i_state:06}"
+        fstate_i = f"state.{i_state:06}"
 
         if sliced:
             fstate_i += "_sliced"
@@ -61,13 +61,13 @@ def dnsrec(rundir, si, sf, nrec, sliced):
         try:
             state_i, _ = dns.readState(rundir / fstate_i)
         except:
-            print(f"Cannot read f{str(rundir / fstate_i)}")
+            print(f"Cannot read {str(rundir / fstate_i)}")
             break
 
         for j in range(1, nrec + 1):
 
             j_state = i_state + j
-            fstate_j = f"state:{j_state:06}"
+            fstate_j = f"state.{j_state:06}"
 
             if sliced:
                 fstate_j += "_sliced"
