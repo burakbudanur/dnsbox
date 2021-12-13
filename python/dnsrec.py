@@ -95,5 +95,24 @@ def dnsrec(rundir, si, sf, nrec, sliced):
 
     return 
 
+
+def plotrec(frec, dt = 1):
+    """
+    Plot a recurrence matrix
+    """
+    
+    rec_mat = np.loadtxt(frec)
+    w, l = rec_mat.shape()
+    
+    wfig = 12
+    lfig = wfig * l / w
+    
+    fig, ax = plt.subplots(1, 1, figsize=(wfig, lfig))
+    ax.imshow(rec_mat)
+    
+    return fig, ax
+    
+
+
 if __name__ == "__main__":
     main()
