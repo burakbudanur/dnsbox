@@ -490,11 +490,17 @@ module solver
         integer(i4),          intent(in)  :: ims
         real(dp), intent(in)  :: x(nnewt)
 
-        integer :: i_vec_0
-
+        integer :: i_delta_t
         
         if (my_id == 0 .and. ndts_ /= 1 .and. find_period) then 
-            dt = x(ims*nnewt_pershot + 1) * scaleT / ndts_
+
+            i_delta_t = ims * nnewt_pershoot + 1
+            if (ims /= 0) then 
+                i_delta_t = i_delta_t + i_find_shift_x + i_find_shift_z
+            end if
+
+            dt = x(i_delta_t) * scaleT / ndts_
+            
         end if
                 
         call MPI_BCAST(dt, 1, MPI_REAL8, 0, MPI_COMM_WORLD, mpi_err)
