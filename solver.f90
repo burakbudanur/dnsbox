@@ -9,18 +9,20 @@ module solver
     integer(i4), allocatable :: ndtss(:)
 
     logical :: find_period = .false., &
-               rel_Rxy = .false., rel_Ry = .false., rel_Rz = .false., &
-               rel_Sx = .false., rel_Sy = .false., rel_TxHalf = .false., &
-               rel_TzHalf = .false.
+        find_shift_x = .false., find_shift_z = .false.,&
+        rel_Rxy = .false., rel_Ry = .false., rel_Rz = .false., &
+        rel_Sx = .false., rel_Sy = .false., rel_TxHalf = .false., &
+        rel_TzHalf = .false.
 
     integer(i4)  :: ndts, &
                     new_nits, new_gits, &
                     ms=1, & ! number of shoots
                     mgmres=50, nits=50, &! m for gmres(m), max newton its
                     ncgd=10, aits=50, & ! arnoldi params
-                    nscalars, nnewt_pershot, nnewt, &
+                    i_find_period, nnewt_pershot, nnewt, &
                     averages_ch
-    real(dp)     :: period, scaleT, &
+    
+    real(dp)     :: period, scaleT, shift_x, scale_dex, shift_z, scale_dez, &
                     rel_err=1.0e-11_dp, &
                     del=-1.0_dp, & ! delta for hookstep-trust-region
                     mndl=1.0e-13_dp, &
@@ -34,9 +36,9 @@ module solver
     character(255) :: averages_file = 'averages.gp'
     complex(dpc), allocatable :: average(:, :, :, :)
 
-    namelist /invariants/ find_period, periods, ndtss, &
-                            rel_Rxy, rel_Ry, rel_Rz, rel_Sx, rel_Sy, &
-                            rel_TxHalf, rel_TzHalf
+    namelist /invariants/ find_period, find_shift_x, find_shift_z, &
+        periods, shift_x, shift_z, ndtss, &
+        rel_Rxy, rel_Ry, rel_Rz, rel_Sx, rel_Sy, rel_TxHalf, rel_TzHalf
     namelist /newton_params/ ms, mgmres, nits, rel_err, del, mndl, mxdl, gtol, epsJ
     namelist /arnoldi_params/ ncgd, aits, abs_err, epsA
 
@@ -60,7 +62,11 @@ module solver
 
         write(out, *) "Invariant data:"
         write(out, *) 'find_period = ', find_period
+        write(out, *) 'find_shift_x = ', find_shift_x
+        write(out, *) 'find_shift_z = ', find_shift_z
         write(out, *) "periods", periods
+        write(out, *) "shift_x", shift_x
+        write(out, *) "shift_z", shift_z
         write(out, *) "ndtss", ndtss
         write(out, *) "rel_Rxy", rel_Rxy
         write(out, *) "rel_Ry", rel_Ry
@@ -156,17 +162,21 @@ module solver
 
     subroutine solver_set_problem_size
 
-        nscalars = 0
+        i_find_period = 0
+        i_find_shift_x = 0
+        i_find_shift_z = 0
         if (my_id == 0) then
-            if (find_period) nscalars = nscalars + 1
+            if (find_period) i_find_period = 1
+            if (find_shift_x) i_find_shift_x = 1
+            if (find_shift_z) i_find_shift_z = 1
         end if
 
         ! all of two dimensions
 
         if (ix_max /= -1) then
-            nnewt_pershot = 2*(nx_perproc-1)*ny_half*(nz-1) * 2 + nscalars  
+            nnewt_pershot = 2*(nx_perproc-1)*ny_half*(nz-1) * 2 + i_find_period
         else
-            nnewt_pershot = 2*nx_perproc*ny_half*(nz-1) * 2 + nscalars  
+            nnewt_pershot = 2*nx_perproc*ny_half*(nz-1) * 2 + i_find_period
         end if
 
         ! only ki=0 of the i'th dimension
@@ -190,7 +200,7 @@ module solver
 
         end if
 
-        nnewt = ms * nnewt_pershot
+        nnewt = ms * nnewt_pershot + i_find_shift_s + i_find_shift_z
 
     end subroutine solver_set_problem_size
 
@@ -242,18 +252,22 @@ module solver
         integer(i4),    intent(in)  :: ims
         real(dp),       intent(out) :: x(:)
         
-        integer(i4) :: n, ivec
+        integer(i4) :: n, ivec_0, i_vec
         _indices
-        
+
+        ivec_0 = ims * nnewt_pershot + i_find_period &
+        + ims * (i_find_shift_x + i_find_shift_z) ! shifts in 0th shot
+
         ivec = 1
 
         if (nx - 1 >= ny_half .and. nx - 1 >= nz - 1) then
             ! u at kx=0
+
             if (ix_zero /= -1) then
                 do iz = 1, nz; if(iz == iz_max) cycle; do iy = 1, ny_half;
-                        
-                    x(ims*nnewt_pershot + nscalars + ivec) = vfieldk(ix_zero, iy, iz, 1)%re
-                    x(ims*nnewt_pershot + nscalars + ivec + 1) = vfieldk(ix_zero, iy, iz, 1)%im
+                    
+                    x(ivec_0 + ivec) = vfieldk(ix_zero, iy, iz, 1)%re
+                    x(ivec_0 + ivec + 1) = vfieldk(ix_zero, iy, iz, 1)%im
 
                     ivec = ivec + 2
                 
@@ -264,8 +278,8 @@ module solver
             do n = 2, 3
                 _loop_spec_begin
                     
-                    x(ims*nnewt_pershot + nscalars + ivec) = vfieldk(ix, iy, iz, n)%re
-                    x(ims*nnewt_pershot + nscalars + ivec + 1) = vfieldk(ix, iy, iz, n)%im
+                    x(i_vec_0 + ivec) = vfieldk(ix, iy, iz, n)%re
+                    x(i_vec_0 + ivec + 1) = vfieldk(ix, iy, iz, n)%im
 
                     ivec = ivec + 2
                     
@@ -276,8 +290,8 @@ module solver
             ! u
             _loop_spec_begin
                 
-                x(ims*nnewt_pershot + nscalars + ivec) = vfieldk(ix, iy, iz, 1)%re
-                x(ims*nnewt_pershot + nscalars + ivec + 1) = vfieldk(ix, iy, iz, 1)%im
+                x(i_vec_0 + ivec) = vfieldk(ix, iy, iz, 1)%re
+                x(i_vec_0 + ivec + 1) = vfieldk(ix, iy, iz, 1)%im
 
                 ivec = ivec + 2
                 
@@ -286,8 +300,8 @@ module solver
             ! v at ky=0
             do iz = 1, nz; if(iz == iz_max) cycle; do ix = 1, nx_perproc; if(ix_max /= -1 .and. ix == ix_max) cycle;
                     
-                x(ims*nnewt_pershot + nscalars + ivec) = vfieldk(ix, 1, iz, 2)%re
-                x(ims*nnewt_pershot + nscalars + ivec + 1) = vfieldk(ix, 1, iz, 2)%im
+                x(i_vec_0 + ivec) = vfieldk(ix, 1, iz, 2)%re
+                x(i_vec_0 + ivec + 1) = vfieldk(ix, 1, iz, 2)%im
 
                 ivec = ivec + 2
             
@@ -296,8 +310,8 @@ module solver
             ! w
             _loop_spec_begin
                 
-                x(ims*nnewt_pershot + nscalars + ivec) = vfieldk(ix, iy, iz, 3)%re
-                x(ims*nnewt_pershot + nscalars + ivec + 1) = vfieldk(ix, iy, iz, 3)%im
+                x(i_vec_0 + ivec) = vfieldk(ix, iy, iz, 3)%re
+                x(i_vec_0 + ivec + 1) = vfieldk(ix, iy, iz, 3)%im
 
                 ivec = ivec + 2
                 
@@ -308,8 +322,8 @@ module solver
             do n = 1, 2
                 _loop_spec_begin
                     
-                    x(ims*nnewt_pershot + nscalars + ivec) = vfieldk(ix, iy, iz, n)%re
-                    x(ims*nnewt_pershot + nscalars + ivec + 1) = vfieldk(ix, iy, iz, n)%im
+                    x(i_vec_0 + ivec) = vfieldk(ix, iy, iz, n)%re
+                    x(i_vec_0 + ivec + 1) = vfieldk(ix, iy, iz, n)%im
 
                     ivec = ivec + 2
                     
@@ -319,8 +333,8 @@ module solver
             ! w at kz=0
             do iy = 1, ny_half; do ix = 1, nx_perproc; if(ix_max /= -1 .and. ix == ix_max) cycle;
                     
-                x(ims*nnewt_pershot + nscalars + ivec) = vfieldk(ix, iy, 1, 3)%re
-                x(ims*nnewt_pershot + nscalars + ivec + 1) = vfieldk(ix, iy, 1, 3)%im
+                x(i_vec_0 + ivec) = vfieldk(ix, iy, 1, 3)%re
+                x(i_vec_0 + ivec + 1) = vfieldk(ix, iy, 1, 3)%im
 
                 ivec = ivec + 2
             
@@ -338,9 +352,12 @@ module solver
         integer(i4),    intent(in)  :: ims
         real(dp) ,      intent(in)  :: x(:)
         
-        integer(i4) :: n, ivec
+        integer(i4) :: n, ivec_0, i_vec
         _indices
-        
+
+        ivec_0 = ims * nnewt_pershot + i_find_period &
+        + ims * (i_find_shift_x + i_find_shift_z) ! shifts in 0th shot
+
         ivec = 1
 
         if (nx - 1 >= ny_half .and. nx - 1 >= nz - 1) then
@@ -348,8 +365,8 @@ module solver
             if (ix_zero /= -1) then
                 do iz = 1, nz; if(iz == iz_max) cycle; do iy = 1, ny_half;
 
-                    vfieldk(ix_zero, iy, iz, 1)%re = x(ims*nnewt_pershot + nscalars + ivec)
-                    vfieldk(ix_zero, iy, iz, 1)%im = x(ims*nnewt_pershot + nscalars + ivec + 1)
+                    vfieldk(ix_zero, iy, iz, 1)%re = x(i_vec_0 + ivec)
+                    vfieldk(ix_zero, iy, iz, 1)%im = x(i_vec_0 + ivec + 1)
 
                     ivec = ivec + 2
                 end do; end do;
@@ -359,8 +376,8 @@ module solver
             do n = 2, 3
                 _loop_spec_begin
         
-                    vfieldk(ix, iy, iz, n)%re = x(ims*nnewt_pershot + nscalars + ivec)
-                    vfieldk(ix, iy, iz, n)%im = x(ims*nnewt_pershot + nscalars + ivec + 1)
+                    vfieldk(ix, iy, iz, n)%re = x(i_vec_0 + ivec)
+                    vfieldk(ix, iy, iz, n)%im = x(i_vec_0 + ivec + 1)
 
                     ivec = ivec + 2
                 
@@ -378,8 +395,8 @@ module solver
             ! u
             _loop_spec_begin
 
-                vfieldk(ix, iy, iz, 1)%re = x(ims*nnewt_pershot + nscalars + ivec)
-                vfieldk(ix, iy, iz, 1)%im = x(ims*nnewt_pershot + nscalars + ivec + 1)
+                vfieldk(ix, iy, iz, 1)%re = x(i_vec_0 + ivec)
+                vfieldk(ix, iy, iz, 1)%im = x(i_vec_0 + ivec + 1)
 
                 ivec = ivec + 2
         
@@ -388,8 +405,8 @@ module solver
             ! v at ky=0
             do iz = 1, nz; if(iz == iz_max) cycle; do ix = 1, nx_perproc; if(ix_max /= -1 .and. ix == ix_max) cycle;
 
-                vfieldk(ix, 1, iz, 2)%re = x(ims*nnewt_pershot + nscalars + ivec)
-                vfieldk(ix, 1, iz, 2)%im = x(ims*nnewt_pershot + nscalars + ivec + 1)
+                vfieldk(ix, 1, iz, 2)%re = x(i_vec_0 + ivec)
+                vfieldk(ix, 1, iz, 2)%im = x(i_vec_0 + ivec + 1)
 
                 ivec = ivec + 2
             end do; end do;
@@ -397,8 +414,8 @@ module solver
             ! w
             _loop_spec_begin
 
-                vfieldk(ix, iy, iz, 3)%re = x(ims*nnewt_pershot + nscalars + ivec)
-                vfieldk(ix, iy, iz, 3)%im = x(ims*nnewt_pershot + nscalars + ivec + 1)
+                vfieldk(ix, iy, iz, 3)%re = x(i_vec_0 + ivec)
+                vfieldk(ix, iy, iz, 3)%im = x(i_vec_0 + ivec + 1)
 
                 ivec = ivec + 2
         
@@ -416,8 +433,8 @@ module solver
             do n = 1, 2
                 _loop_spec_begin
     
-                    vfieldk(ix, iy, iz, n)%re = x(ims*nnewt_pershot + nscalars + ivec)
-                    vfieldk(ix, iy, iz, n)%im = x(ims*nnewt_pershot + nscalars + ivec + 1)
+                    vfieldk(ix, iy, iz, n)%re = x(i_vec_0 + ivec)
+                    vfieldk(ix, iy, iz, n)%im = x(i_vec_0 + ivec + 1)
 
                     ivec = ivec + 2
                 
@@ -427,8 +444,8 @@ module solver
             ! w at kz=0
             do iy = 1, ny_half; do ix = 1, nx_perproc; if(ix_max /= -1 .and. ix == ix_max) cycle;
 
-                vfieldk(ix, iy, 1, 3)%re = x(ims*nnewt_pershot + nscalars + ivec)
-                vfieldk(ix, iy, 1, 3)%im = x(ims*nnewt_pershot + nscalars + ivec + 1)
+                vfieldk(ix, iy, 1, 3)%re = x(i_vec_0 + ivec)
+                vfieldk(ix, iy, 1, 3)%im = x(i_vec_0 + ivec + 1)
 
                 ivec = ivec + 2
             end do; end do;
