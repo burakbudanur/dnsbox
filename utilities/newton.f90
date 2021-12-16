@@ -5,6 +5,7 @@ module mnewton
     use io
     use run
     use solver
+    use symmpos
 
     contains
 
@@ -18,20 +19,74 @@ module mnewton
         real(dp), intent(in)  :: x(nnewt)
         real(dp), intent(out) :: y(nnewt)
         real(dp) :: y_(nnewt)
-        integer(i4) :: ims, ims_
+        integer(i4) :: ims, ims_, i_delta_t
+
+        real(dp) :: newton_shift_x, newton_shift_y
 
         do ims = 0, ms -1
             ims_ = modulo(ims+1,ms)
+            
+            if (my_id == 0 .and. ims == 0) then
+                if(find_shift_x .and. find_shift_z) then
+                    newton_shift_x = x(i_find_period + 1) * scale_dex
+                    newton_shift_z = x(i_find_period + 2) * scale_dez
+                else if(find_shift_x) then 
+                    newton_shift_x = x(i_find_period + 1) * scale_dex
+                else if(find_shift_z) then
+                    newton_shift_z = x(i_find_period + 1) * scale_dez
+                end if
+            end if
+
             call solver_steporbit(ndtss(ims+1), ims, x)
+            
+            if (ims == ms - 1 .and. find_shift_x) then 
+                call MPI_BCAST(newton_shift_x, 1, MPI_REAL8, 0, MPI_COMM_WORLD, mpi_err)
+                call symmops_shiftx(- newton_shift_x, vel_vfieldk_now, vel_vfieldk_now)
+            end if
+
+            if (ims == ms - 1 .and. find_shift_z) then 
+                call MPI_BCAST(newton_shift_z, 1, MPI_REAL8, 0, MPI_COMM_WORLD, mpi_err)
+                call symmops_shiftz(- newton_shift_z, vel_vfieldk_now, vel_vfieldk_now)
+            end if
+
+            if (ims == ms - 1 .and. (find_shift_x .or. find_shift_z) ) then 
+                call fftw_vk2x(vel_vfieldk_now, vel_vfieldxx_now)
+            end if
+
             if (ims == ms -1) call solver_relative_symmetries_apply(vel_vfieldxx_now, vel_vfieldk_now)
             call solver_vectorize(vel_vfieldk_now, ims_, y_)
         end do
         y = y_ - x            ! diff
         
-        if (my_id == 0 .and. nscalars > 0) then
-            do ims=0, ms-1
-                y(ims*nnewt_pershot+1:ims*nnewt_pershot+nscalars) = 0 ! constraints, rhs=0
-            end do
+        if (my_id == 0) then
+
+            if (find_period) then
+                
+                do ims=0, ms-1
+
+                    i_delta_t = ims * nnewt_pershoot + 1
+
+                    if (ims /= 0) then 
+                        i_delta_t = i_delta_t + i_find_shift_x + i_find_shift_z
+                    end if
+                    
+                    y(i_delta_t) = 0 ! constraints, rhs=0
+
+                end do
+
+            end if
+
+            if (find_shift_x .and. find_shift_z) then 
+                    
+                y(i_find_period + 1) = 0
+                y(i_find_period + 2) = 0
+            
+            else if (find_shift_x .or. find_shift_z) then 
+
+                y(i_find_period + 1) = 0
+            
+            end if        
+
         end if
         
     end subroutine getrhs
@@ -57,7 +112,7 @@ module mnewton
             write(out,*) 'multJ: eps=0 (1)'
             flush(out)
             stop
-        end if
+        end if  
         eps = epsJ * sqrt(solver_dotprod_ms(new_x,new_x)) / eps
         write(out, *) 'eps_ = ', eps
         if(abs(eps) < small)  then 
