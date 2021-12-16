@@ -256,7 +256,9 @@ module solver
         _indices
 
         ivec_0 = ims * nnewt_pershot + i_find_period &
-        + ims * (i_find_shift_x + i_find_shift_z) ! shifts in 0th shot
+        + i_find_shift_x + i_find_shift_z ! shifts in 0th shot
+
+        if (ims == 0) ivec_0 = ivec_0 + i_find_shift_x + i_find_shift_z
 
         ivec = 1
 
@@ -356,7 +358,9 @@ module solver
         _indices
 
         ivec_0 = ims * nnewt_pershot + i_find_period &
-        + ims * (i_find_shift_x + i_find_shift_z) ! shifts in 0th shot
+        + i_find_shift_x + i_find_shift_z ! shifts in 0th shot
+
+        if (ims == 0) ivec_0 = ivec_0 + i_find_shift_x + i_find_shift_z
 
         ivec = 1
 
@@ -485,6 +489,9 @@ module solver
         integer(i4),          intent(in)  :: ndts_
         integer(i4),          intent(in)  :: ims
         real(dp), intent(in)  :: x(nnewt)
+
+        integer :: i_vec_0
+
         
         if (my_id == 0 .and. ndts_ /= 1 .and. find_period) then 
             dt = x(ims*nnewt_pershot + 1) * scaleT / ndts_
