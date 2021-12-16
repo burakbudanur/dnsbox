@@ -795,9 +795,7 @@ def fftSpecToPhys(subState, supersample=False):
 
         expandY = np.zeros((nxx, nyy_half_pad1, nzz), dtype=np.complex128)
         expandY[:, :ny_half, :] = expandX
-        stateOut = np.fft.irfft(expandY, axis=1, norm="backward", n=nyy) * (
-            nxx * nyy * nzz
-        )
+        stateOut = np.fft.irfft(expandY, axis=1, norm="backward", n=nyy)
     else:
         nxx, nyy, nzz = nx, 2 * ny_half, nz
         stateOut = np.swapaxes(
@@ -840,9 +838,7 @@ def fftPhysToSpec(stateOut, supersample=False):
         nxp, nzp = nx // 2 - 1, nz // 2 - 1
 
         # FFT in y
-        expandY = np.fft.rfft(stateOut, axis=1, norm="backward", n=nyy) / (
-            nxx * nyy * nzz
-        )
+        expandY = np.fft.rfft(stateOut, axis=1, norm="backward", n=nyy)
         # Shrink in y
         expandX = expandY[:, :ny_half, :]
 
