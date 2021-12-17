@@ -7,6 +7,9 @@ module mnewton
     use solver
     use symmpos
 
+    complex(dpc), allocatable, dimension(:, :, :, :) :: &
+    part_x_vfieldk, part_z_vfieldk
+
     contains
 
     include "NewtonHook.f90"
@@ -100,7 +103,7 @@ module mnewton
         real(dp), intent(in)     :: x(nnewt)
         real(dp), intent(out)    :: y(nnewt)   
         real(dp) :: eps, s(nnewt), d, dt_new, dt_old
-        integer(i4)  :: ims
+        integer(i4)  :: ims, i_delta_t, k
                         ! (F(x0+eps.x)-F(x0))/eps
         
         write(out, *) 'Jacobian call '
@@ -131,7 +134,15 @@ module mnewton
 
         do ims = 0, ms -1
             if (my_id == 0 .and. find_period) then 
-                dt_new = new_x(ims*nnewt_pershot + 1) * scaleT / ndtss(ims + 1)
+                
+                i_delta_t = ims * nnewt_pershoot + 1
+
+                if (ims /= 0) then 
+                    i_delta_t = i_delta_t + i_find_shift_x + i_find_shift_z
+                end if
+
+                dt_new = new_x(i_delta_t) * scaleT / ndtss(ims + 1)
+
             end if
             
             if (find_period) then
@@ -154,9 +165,38 @@ module mnewton
 
             if (find_period) dt = dt_old
             
-            if (my_id == 0 .and. nscalars > 0) then
-                if (find_period) y(ims*nnewt_pershot + 1) = d
+            if (my_id == 0 .and. i_find_period > 0) then
+                if (find_period) y(i_delta_t) = d
             end if
+
+            ! contstraint, 
+            ! no update in x-direction
+            
+            if (ims == 0) then
+                call solver_tensorize(vel_vfieldk_now, ims, new_x)
+                do k = 1, 3
+                    diffops_partx(vel_vfieldk_now(:, :, :, k), part_x_vfieldk(:, :, :, k))
+                    diffops_partz(vel_vfieldk_now(:, :, :, k), part_z_vfieldk(:, :, :, k))
+                end do
+
+                solver_vectorize(part_x_vfieldk, ims, s)
+                d = solver_dotprod(ims, s, x)
+
+                if (my_id == 0 .and. find_shift_x) then
+                    y(i_find_period + 1) = d
+                end if
+
+                solver_vectorize(part_z_vfieldk, ims, s)
+                d = solver_dotprod(ims, s, x)
+
+                if (my_id == 0 .and. find_shift_x .and. find_shift_z) then
+                    y(i_find_period + 2) = d
+                else if (my_id == 0 .and. find_shift_z) then
+                    y(i_find_period + 1) = d                    
+                end if
+
+            end if
+
         end do
         
     end subroutine multJ
@@ -338,6 +378,9 @@ program newton
     allocate(new_x(nnewt))
     allocate(new_fx(nnewt))
     new_x = 0
+
+    allocate(part_x_vfieldk(nx_perproc, ny_half, nz, 3))
+    allocate(part_z_vfieldk(nx_perproc, ny_half, nz, 3))
     
     do ims = 1, ms
         if (ndtss(ims) < 0) ndtss(ims) = nint(periods(ims)/dt)
