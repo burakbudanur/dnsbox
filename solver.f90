@@ -19,8 +19,8 @@ module solver
                     ms=1, & ! number of shoots
                     mgmres=50, nits=50, &! m for gmres(m), max newton its
                     ncgd=10, aits=50, & ! arnoldi params
-                    i_find_period, nnewt_pershot, nnewt, &
-                    averages_ch
+                    i_find_period, i_find_shift_x, i_find_shift_z, &
+                    nnewt_pershot, nnewt, averages_ch
     
     real(dp)     :: period, scaleT, shift_x, scale_dex, shift_z, scale_dez, &
                     rel_err=1.0e-11_dp, &

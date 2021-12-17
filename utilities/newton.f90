@@ -30,14 +30,16 @@ module mnewton
             ims_ = modulo(ims+1,ms)
             
             if (my_id == 0 .and. ims == 0) then
-                if(find_shift_x .and. find_shift_z) then
-                    newton_shift_x = x(i_find_period + 1) * scale_dex
-                    newton_shift_z = x(i_find_period + 2) * scale_dez
-                else if(find_shift_x) then 
-                    newton_shift_x = x(i_find_period + 1) * scale_dex
-                else if(find_shift_z) then
-                    newton_shift_z = x(i_find_period + 1) * scale_dez
+
+                if (find_shift_x) then 
+                    newton_shift_x = x(i_find_period + i_find_shift_x) * scale_dex 
                 end if
+                
+                if (find_shift_z) then 
+                    newton_shift_z = &
+                        x(i_find_period + i_find_shift_x + 1) * scale_dez 
+                end if
+
             end if
 
             call solver_steporbit(ndtss(ims+1), ims, x)
@@ -79,16 +81,17 @@ module mnewton
 
             end if
 
-            if (find_shift_x .and. find_shift_z) then 
-                    
-                y(i_find_period + 1) = 0
-                y(i_find_period + 2) = 0
-            
-            else if (find_shift_x .or. find_shift_z) then 
+            if (find_shift_x) then
 
-                y(i_find_period + 1) = 0
+                y(i_find_period + i_find_shift_x) = 0
             
-            end if        
+            end if
+
+            if (find_shift_z) then 
+
+                y(i_find_period + i_find_shift_x + i_find_shift_z) = 0
+
+            end if
 
         end if
         
@@ -173,6 +176,7 @@ module mnewton
             ! no update in x-direction
             
             if (ims == 0) then
+
                 call solver_tensorize(vel_vfieldk_now, ims, new_x)
                 do k = 1, 3
                     diffops_partx(vel_vfieldk_now(:, :, :, k), part_x_vfieldk(:, :, :, k))
@@ -189,10 +193,8 @@ module mnewton
                 solver_vectorize(part_z_vfieldk, ims, s)
                 d = solver_dotprod(ims, s, x)
 
-                if (my_id == 0 .and. find_shift_x .and. find_shift_z) then
-                    y(i_find_period + 2) = d
-                else if (my_id == 0 .and. find_shift_z) then
-                    y(i_find_period + 1) = d                    
+                if (my_id == 0 .and. find_shift_z) then
+                    y(i_find_period + i_find_shift_x + 1) = d
                 end if
 
             end if
@@ -206,7 +208,7 @@ module mnewton
     subroutine saveorbit
         
         real(dp) :: norm_x
-        integer(i4) :: KILL_SWITCH_PERIOD = 0,un, ims
+        integer(i4) :: KILL_SWITCH_PERIOD = 0,un, ims, i_delta_t
         character*1 :: ims_str
         complex(dpc) :: vfieldk(nx_perproc, ny_half, nz, 3)
 
@@ -225,13 +227,19 @@ module mnewton
             close(un)
         end if
         
-        if (my_id == 0 .and. nscalars > 0) then
+        if (my_id == 0 .and. (i_find_period + i_find_shift_x + i_find_shift_z) > 0) then
             if (find_period) then
                 period = 0
                 do ims = 0, ms -1
-                    period = period + new_x(ims*nnewt_pershot+1) * scaleT
+
+                    i_delta_t = ims * nnewt_pershoot + 1
+                    if (ims /= 0) then 
+                        i_delta_t = i_delta_t + i_find_shift_x + i_find_shift_z
+                    end if        
+
+                    period = period + new_x(i_delta_t) * scaleT
                     ! Kill switch for negative period guesses
-                    if (new_x(ims*nnewt_pershot+1) * scaleT < 0) then
+                    if (new_x(i_delta_t) * scaleT < 0) then
                         KILL_SWITCH_PERIOD = 1
                     end if
                 end do
@@ -249,6 +257,24 @@ module mnewton
                 write(un, "("//i4_f//","//dp_f//","//dp_f//")") new_nits, period
             end if
             close(un)
+
+            if (find_shift_x) then 
+                shift_x = new_x(i_find_period + 1) * scale_dex
+            end if
+
+            if (find_shift_x .and. find_shift_z) then
+                shift_z = new_x(i_find_period + 2) * scale_dez 
+            else if (find_shift_z) then
+                shift_z = new_x(i_find_period + 1) * scale_dez
+            end if
+
+            if (find_shift_x .or. find_shift_z) then
+
+                open(newunit=un,status='unknown',access='append',file='shifts.dat')
+                write(un,"(A2,"//dp_f//","//dp_f//")") "# ", shift_x, shift_z
+                close(un)
+            
+            end if
 
         end if
 
@@ -357,7 +383,7 @@ program newton
     real(dp)           :: d
     logical            :: forbidNewton
     
-    integer(i4) :: ims, info
+    integer(i4) :: ims, info, i_delta_t
     logical     :: fexist
     character*1 :: ims_str
 
@@ -389,9 +415,25 @@ program newton
     if (my_id == 0 .and. nscalars > 0) then
         if (find_period) then
             do ims = 0, ms - 1
-                new_x(ims*nnewt_pershot + 1) = periods(ims + 1)
+
+                i_delta_t = ims * nnewt_pershoot + 1
+
+                if (ims /= 0) then 
+                    i_delta_t = i_delta_t + i_find_shift_x + i_find_shift_z
+                end if
+    
+                new_x(i_delta_t) = periods(ims + 1)
             end do
         end if
+        
+        if (find_shift_x) then
+            new_x(i_find_period + 1) = shift_x
+        end if
+        
+        if (find_shift_z) then 
+            new_x(i_find_period + i_find_shift_x + 1) = shift_z
+        end if
+
     end if
     
     ! Load the state    
@@ -433,12 +475,32 @@ program newton
     d = solver_dotprod(0,new_x,new_x)
     if(abs(d) < small) d=1.0_dp
     scaleT = periods(1) / sqrt(d)
+    scale_dex = shift_x / sqrt(d)
+    scale_dez = shift_z / sqrt(d)
+
     if (my_id == 0 .and. nscalars > 0) then
         if (find_period) then
             do ims  = 0, ms - 1
-                new_x(ims*nnewt_pershot+1) = new_x(ims*nnewt_pershot+1) / scaleT
+
+                i_delta_t = ims * nnewt_pershoot + 1
+
+                if (ims /= 0) then 
+                    i_delta_t = i_delta_t + i_find_shift_x + i_find_shift_z
+                end if
+
+                new_x(i_delta_t) = new_x(i_delta_t) / scaleT
             end do
         end if
+
+        if (find_shift_x) then 
+            new_x(i_find_period + 1) = new_x(i_find_period + 1) / scale_dex 
+        end if
+
+        if (find_shift_z) then 
+            new_x(i_find_period + i_find_shift_x + 1) = &
+                new_x(i_find_period + i_find_shift_x + 1) / scale_dez 
+        end if
+
     end if
 
     tol  = rel_err * sqrt(d)
