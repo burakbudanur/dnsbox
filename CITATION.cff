@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+authors:
+- family-names: "Yalnız"
+  given-names: "Gökhan"
+  orcid: "https://orcid.org/0000-0002-8490-9312"
+- family-names: "Budanur"
+  given-names: "Nazmi Burak"
+  orcid: "https://orcid.org/0000-0003-0423-5010"
+title: "dnsbox"
+date-released: 2021-07-19
+url: "https://github.com/burakbudanur"
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Yalnız"
+    given-names: "Gökhan"
+    orcid: "https://orcid.org/0000-0002-8490-9312"
+  - family-names: "Hof"
+    given-names: "Björn"
+    orcid: "https://orcid.org/0000-0003-2057-2754"
+  - family-names: "Budanur"
+    given-names: "Nazmi Burak"
+    orcid: "https://orcid.org/0000-0003-0423-5010"
+  doi: "10.1103/PhysRevLett.126.244502"
+  journal: "Phys. Rev. Lett."
+  month: 6
+  title: "Coarse Graining the State Space of a Turbulent Flow Using Periodic Orbits"
+  issue: 24
+  volume: 126
+  year: 2021
