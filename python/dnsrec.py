@@ -102,13 +102,13 @@ def plotrec(frec, dt = 1):
     """
     
     rec_mat = np.loadtxt(frec)
-    w, l = rec_mat.shape()
+    w, l = rec_mat.shape
     
     wfig = 12
     lfig = wfig * l / w
     
     fig, ax = plt.subplots(1, 1, figsize=(wfig, lfig))
-    ax.imshow(rec_mat)
+    ax.imshow(rec_mat.transpose())
     
     return fig, ax
     

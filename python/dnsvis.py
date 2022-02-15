@@ -156,6 +156,7 @@ def dnsvis(
     p.camera.roll -= 10
 
     p.show(screenshot=figuresDir / f"{state.name}_isosurf.png")
+    return p
 
 
 def Q_criterion(
@@ -165,6 +166,7 @@ def Q_criterion(
     undotilt=False,
     sublam=False,
     Q = 0.1,
+    show_axes=True,
 ):
 
     if xvfb:
@@ -174,6 +176,7 @@ def Q_criterion(
     pv.set_plot_theme("document")
     state = Path(state)
     figuresDir = dns.createFiguresDir(state.parent)
+    
     stateIn, header = dns.readState(state)
 
     forcing, nx, ny, nz, Lx, Lz, Re, tilt_angle, dt, itime, time = header
@@ -212,8 +215,9 @@ def Q_criterion(
         opacity=0.5,
         show_scalar_bar=False,
     )
-
-    p.show_axes()
+    
+    if show_axes:
+        p.show_axes()
 
     #
     p.camera.roll += 90
@@ -224,6 +228,7 @@ def Q_criterion(
     p.camera.roll -= 10
 
     p.show(screenshot=figuresDir / f"{state.name}_isosurf.png")
+    return p
 
 if __name__ == "__main__":
     main()
