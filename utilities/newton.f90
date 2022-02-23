@@ -6,6 +6,7 @@ module mnewton
     use run
     use solver
     use symmops
+    use diffops
 
     complex(dpc), allocatable, dimension(:, :, :, :) :: &
     part_x_vfieldk, part_z_vfieldk
@@ -24,7 +25,7 @@ module mnewton
         real(dp) :: y_(nnewt)
         integer(i4) :: ims, ims_, i_delta_t
 
-        real(dp) :: newton_shift_x, newton_shift_y
+        real(dp) :: newton_shift_x, newton_shift_z
 
         do ims = 0, ms -1
             ims_ = modulo(ims+1,ms)
@@ -69,7 +70,7 @@ module mnewton
                 
                 do ims=0, ms-1
 
-                    i_delta_t = ims * nnewt_pershoot + 1
+                    i_delta_t = ims * nnewt_pershot + 1
 
                     if (ims /= 0) then 
                         i_delta_t = i_delta_t + i_find_shift_x + i_find_shift_z
@@ -138,7 +139,7 @@ module mnewton
         do ims = 0, ms -1
             if (my_id == 0 .and. find_period) then 
                 
-                i_delta_t = ims * nnewt_pershoot + 1
+                i_delta_t = ims * nnewt_pershot + 1
 
                 if (ims /= 0) then 
                     i_delta_t = i_delta_t + i_find_shift_x + i_find_shift_z
@@ -179,18 +180,18 @@ module mnewton
 
                 call solver_tensorize(vel_vfieldk_now, ims, new_x)
                 do k = 1, 3
-                    diffops_partx(vel_vfieldk_now(:, :, :, k), part_x_vfieldk(:, :, :, k))
-                    diffops_partz(vel_vfieldk_now(:, :, :, k), part_z_vfieldk(:, :, :, k))
+                    call diffops_partx(vel_vfieldk_now(:, :, :, k), part_x_vfieldk(:, :, :, k))
+                    call diffops_partz(vel_vfieldk_now(:, :, :, k), part_z_vfieldk(:, :, :, k))
                 end do
 
-                solver_vectorize(part_x_vfieldk, ims, s)
+                call solver_vectorize(part_x_vfieldk, ims, s)
                 d = solver_dotprod(ims, s, x)
 
                 if (my_id == 0 .and. find_shift_x) then
                     y(i_find_period + 1) = d
                 end if
 
-                solver_vectorize(part_z_vfieldk, ims, s)
+                call solver_vectorize(part_z_vfieldk, ims, s)
                 d = solver_dotprod(ims, s, x)
 
                 if (my_id == 0 .and. find_shift_z) then
@@ -232,7 +233,7 @@ module mnewton
                 period = 0
                 do ims = 0, ms -1
 
-                    i_delta_t = ims * nnewt_pershoot + 1
+                    i_delta_t = ims * nnewt_pershot + 1
                     if (ims /= 0) then 
                         i_delta_t = i_delta_t + i_find_shift_x + i_find_shift_z
                     end if        
@@ -373,6 +374,7 @@ program newton
     use parameters
     use fftw
     use symmops
+    use diffops
     use fieldio
     use vfield
     use timestep
@@ -416,7 +418,7 @@ program newton
         if (find_period) then
             do ims = 0, ms - 1
 
-                i_delta_t = ims * nnewt_pershoot + 1
+                i_delta_t = ims * nnewt_pershot + 1
 
                 if (ims /= 0) then 
                     i_delta_t = i_delta_t + i_find_shift_x + i_find_shift_z
@@ -482,7 +484,7 @@ program newton
         if (find_period) then
             do ims  = 0, ms - 1
 
-                i_delta_t = ims * nnewt_pershoot + 1
+                i_delta_t = ims * nnewt_pershot + 1
 
                 if (ims /= 0) then 
                     i_delta_t = i_delta_t + i_find_shift_x + i_find_shift_z

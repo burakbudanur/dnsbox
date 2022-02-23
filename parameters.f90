@@ -4,7 +4,7 @@ module parameters
     use io
 
     ! DO NOT EDIT ABOVE THIS LINE
-    character(7), parameter :: revision = "fe109d7"
+    character(7), parameter :: revision = "03b90a8"
 
     !# Geometry & discretization
     integer(i4) :: &
