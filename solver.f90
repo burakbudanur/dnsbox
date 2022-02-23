@@ -200,7 +200,7 @@ module solver
 
         end if
 
-        nnewt = ms * nnewt_pershot + i_find_shift_s + i_find_shift_z
+        nnewt = ms * nnewt_pershot + i_find_shift_x + i_find_shift_z
 
     end subroutine solver_set_problem_size
 
@@ -252,7 +252,7 @@ module solver
         integer(i4),    intent(in)  :: ims
         real(dp),       intent(out) :: x(:)
         
-        integer(i4) :: n, ivec_0, i_vec
+        integer(i4) :: n, ivec_0, ivec
         _indices
 
         ivec_0 = ims * nnewt_pershot + i_find_period &
@@ -280,8 +280,8 @@ module solver
             do n = 2, 3
                 _loop_spec_begin
                     
-                    x(i_vec_0 + ivec) = vfieldk(ix, iy, iz, n)%re
-                    x(i_vec_0 + ivec + 1) = vfieldk(ix, iy, iz, n)%im
+                    x(ivec_0 + ivec) = vfieldk(ix, iy, iz, n)%re
+                    x(ivec_0 + ivec + 1) = vfieldk(ix, iy, iz, n)%im
 
                     ivec = ivec + 2
                     
@@ -292,8 +292,8 @@ module solver
             ! u
             _loop_spec_begin
                 
-                x(i_vec_0 + ivec) = vfieldk(ix, iy, iz, 1)%re
-                x(i_vec_0 + ivec + 1) = vfieldk(ix, iy, iz, 1)%im
+                x(ivec_0 + ivec) = vfieldk(ix, iy, iz, 1)%re
+                x(ivec_0 + ivec + 1) = vfieldk(ix, iy, iz, 1)%im
 
                 ivec = ivec + 2
                 
@@ -302,8 +302,8 @@ module solver
             ! v at ky=0
             do iz = 1, nz; if(iz == iz_max) cycle; do ix = 1, nx_perproc; if(ix_max /= -1 .and. ix == ix_max) cycle;
                     
-                x(i_vec_0 + ivec) = vfieldk(ix, 1, iz, 2)%re
-                x(i_vec_0 + ivec + 1) = vfieldk(ix, 1, iz, 2)%im
+                x(ivec_0 + ivec) = vfieldk(ix, 1, iz, 2)%re
+                x(ivec_0 + ivec + 1) = vfieldk(ix, 1, iz, 2)%im
 
                 ivec = ivec + 2
             
@@ -312,8 +312,8 @@ module solver
             ! w
             _loop_spec_begin
                 
-                x(i_vec_0 + ivec) = vfieldk(ix, iy, iz, 3)%re
-                x(i_vec_0 + ivec + 1) = vfieldk(ix, iy, iz, 3)%im
+                x(ivec_0 + ivec) = vfieldk(ix, iy, iz, 3)%re
+                x(ivec_0 + ivec + 1) = vfieldk(ix, iy, iz, 3)%im
 
                 ivec = ivec + 2
                 
@@ -324,8 +324,8 @@ module solver
             do n = 1, 2
                 _loop_spec_begin
                     
-                    x(i_vec_0 + ivec) = vfieldk(ix, iy, iz, n)%re
-                    x(i_vec_0 + ivec + 1) = vfieldk(ix, iy, iz, n)%im
+                    x(ivec_0 + ivec) = vfieldk(ix, iy, iz, n)%re
+                    x(ivec_0 + ivec + 1) = vfieldk(ix, iy, iz, n)%im
 
                     ivec = ivec + 2
                     
@@ -335,8 +335,8 @@ module solver
             ! w at kz=0
             do iy = 1, ny_half; do ix = 1, nx_perproc; if(ix_max /= -1 .and. ix == ix_max) cycle;
                     
-                x(i_vec_0 + ivec) = vfieldk(ix, iy, 1, 3)%re
-                x(i_vec_0 + ivec + 1) = vfieldk(ix, iy, 1, 3)%im
+                x(ivec_0 + ivec) = vfieldk(ix, iy, 1, 3)%re
+                x(ivec_0 + ivec + 1) = vfieldk(ix, iy, 1, 3)%im
 
                 ivec = ivec + 2
             
@@ -354,7 +354,7 @@ module solver
         integer(i4),    intent(in)  :: ims
         real(dp) ,      intent(in)  :: x(:)
         
-        integer(i4) :: n, ivec_0, i_vec
+        integer(i4) :: n, ivec_0, ivec
         _indices
 
         ivec_0 = ims * nnewt_pershot + i_find_period &
@@ -369,8 +369,8 @@ module solver
             if (ix_zero /= -1) then
                 do iz = 1, nz; if(iz == iz_max) cycle; do iy = 1, ny_half;
 
-                    vfieldk(ix_zero, iy, iz, 1)%re = x(i_vec_0 + ivec)
-                    vfieldk(ix_zero, iy, iz, 1)%im = x(i_vec_0 + ivec + 1)
+                    vfieldk(ix_zero, iy, iz, 1)%re = x(ivec_0 + ivec)
+                    vfieldk(ix_zero, iy, iz, 1)%im = x(ivec_0 + ivec + 1)
 
                     ivec = ivec + 2
                 end do; end do;
@@ -380,8 +380,8 @@ module solver
             do n = 2, 3
                 _loop_spec_begin
         
-                    vfieldk(ix, iy, iz, n)%re = x(i_vec_0 + ivec)
-                    vfieldk(ix, iy, iz, n)%im = x(i_vec_0 + ivec + 1)
+                    vfieldk(ix, iy, iz, n)%re = x(ivec_0 + ivec)
+                    vfieldk(ix, iy, iz, n)%im = x(ivec_0 + ivec + 1)
 
                     ivec = ivec + 2
                 
@@ -399,8 +399,8 @@ module solver
             ! u
             _loop_spec_begin
 
-                vfieldk(ix, iy, iz, 1)%re = x(i_vec_0 + ivec)
-                vfieldk(ix, iy, iz, 1)%im = x(i_vec_0 + ivec + 1)
+                vfieldk(ix, iy, iz, 1)%re = x(ivec_0 + ivec)
+                vfieldk(ix, iy, iz, 1)%im = x(ivec_0 + ivec + 1)
 
                 ivec = ivec + 2
         
@@ -409,8 +409,8 @@ module solver
             ! v at ky=0
             do iz = 1, nz; if(iz == iz_max) cycle; do ix = 1, nx_perproc; if(ix_max /= -1 .and. ix == ix_max) cycle;
 
-                vfieldk(ix, 1, iz, 2)%re = x(i_vec_0 + ivec)
-                vfieldk(ix, 1, iz, 2)%im = x(i_vec_0 + ivec + 1)
+                vfieldk(ix, 1, iz, 2)%re = x(ivec_0 + ivec)
+                vfieldk(ix, 1, iz, 2)%im = x(ivec_0 + ivec + 1)
 
                 ivec = ivec + 2
             end do; end do;
@@ -418,8 +418,8 @@ module solver
             ! w
             _loop_spec_begin
 
-                vfieldk(ix, iy, iz, 3)%re = x(i_vec_0 + ivec)
-                vfieldk(ix, iy, iz, 3)%im = x(i_vec_0 + ivec + 1)
+                vfieldk(ix, iy, iz, 3)%re = x(ivec_0 + ivec)
+                vfieldk(ix, iy, iz, 3)%im = x(ivec_0 + ivec + 1)
 
                 ivec = ivec + 2
         
@@ -437,8 +437,8 @@ module solver
             do n = 1, 2
                 _loop_spec_begin
     
-                    vfieldk(ix, iy, iz, n)%re = x(i_vec_0 + ivec)
-                    vfieldk(ix, iy, iz, n)%im = x(i_vec_0 + ivec + 1)
+                    vfieldk(ix, iy, iz, n)%re = x(ivec_0 + ivec)
+                    vfieldk(ix, iy, iz, n)%im = x(ivec_0 + ivec + 1)
 
                     ivec = ivec + 2
                 
@@ -448,8 +448,8 @@ module solver
             ! w at kz=0
             do iy = 1, ny_half; do ix = 1, nx_perproc; if(ix_max /= -1 .and. ix == ix_max) cycle;
 
-                vfieldk(ix, iy, 1, 3)%re = x(i_vec_0 + ivec)
-                vfieldk(ix, iy, 1, 3)%im = x(i_vec_0 + ivec + 1)
+                vfieldk(ix, iy, 1, 3)%re = x(ivec_0 + ivec)
+                vfieldk(ix, iy, 1, 3)%im = x(ivec_0 + ivec + 1)
 
                 ivec = ivec + 2
             end do; end do;
@@ -494,7 +494,7 @@ module solver
         
         if (my_id == 0 .and. ndts_ /= 1 .and. find_period) then 
 
-            i_delta_t = ims * nnewt_pershoot + 1
+            i_delta_t = ims * nnewt_pershot + 1
             if (ims /= 0) then 
                 i_delta_t = i_delta_t + i_find_shift_x + i_find_shift_z
             end if

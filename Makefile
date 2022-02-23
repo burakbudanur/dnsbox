@@ -5,8 +5,11 @@ MPIF90 = mpifort
 FCFLAGS = -ffpe-trap=invalid,zero,overflow -Wall -Wextra \
 		  -Wno-missing-include-dirs -fimplicit-none -fexternal-blas \
 		  -ffree-line-length-none -x f95-cpp-input -flto -c -O3 -m64 \
-		  -I${HOMELOCAL}/include -I/usr/include
-LDFLAGS = -L${HOMELOCAL}/lib -L/usr/local -lfftw3 -lblas -llapack
+		  -I${HOMELOCAL}/include -I/usr/include \
+		  -I${HOMELOCAL}/opt/openblas/include
+LDFLAGS = -L${HOMELOCAL}/lib -L${HOMELOCAL}/opt/openblas/lib -L/usr/local \
+		  -lfftw3 -lblas -llapack\
+		  
 
 # Modules
 MODULES = numbers.o\
