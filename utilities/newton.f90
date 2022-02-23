@@ -246,7 +246,7 @@ module mnewton
                 end do
             end if
 
-            open(newunit=un,status='unknown',access='append',file='guesses.dat')
+            open(newunit=un,status='unknown',access='append',file='period.dat')
             if (ms > 1) then
                 write(un,"(A2,"//dp_f//","//i4_f//")") "# ", period, ndts
                 do ims = 0, ms -1
