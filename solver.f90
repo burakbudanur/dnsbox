@@ -486,11 +486,14 @@ module solver
         use timestep
         use stats
         use run
+        use symmops ! DELETE AFTER TESTING DRIFTS
          
         integer(i4),          intent(in)  :: ndts_
         integer(i4),          intent(in)  :: ims
         real(dp), intent(in)  :: x(nnewt)
-
+        
+        real(dp) :: dx_step = 0.0001 ! DELETE AFTER TESTING DRIFTS
+        real(dp) :: dz_step = 0.0002 ! DELETE AFTER TESTING DRIFTS
         integer :: i_delta_t
         
         if (my_id == 0 .and. ndts_ /= 1 .and. find_period) then 
@@ -517,6 +520,10 @@ module solver
     
             call timestep_precorr(vel_vfieldxx_now, vel_vfieldk_now, fvel_vfieldk_now)
             time = time + dt
+
+            call symmops_shiftx(dx_step, vel_vfieldk_now, vel_vfieldk_now) ! DELETE AFTER TESTING DRIFTS
+            call symmops_shiftz(dz_step, vel_vfieldk_now, vel_vfieldk_now) ! DELETE AFTER TESTING DRIFTS
+            call fftw_vk2x(vel_vfieldk_now, vel_vfieldxx_now) ! DELETE AFTER TESTING DRIFTS
     
         end do
         
