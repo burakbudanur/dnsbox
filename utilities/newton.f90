@@ -5,7 +5,7 @@ module mnewton
     use io
     use run
     use solver
-    use symmpos
+    use symmops
 
     complex(dpc), allocatable, dimension(:, :, :, :) :: &
     part_x_vfieldk, part_z_vfieldk
