@@ -20,9 +20,12 @@ module symred
     real(dp) :: phi_x, phi_z
     
     ! output to write phases
-    integer(i4) :: phases_ch
+    integer(i4) :: phases_ch, slice_proj_ch_uw, slice_proj_ch_v
     character(255) :: phases_file = 'phases.gp'
-    logical :: phases_written = .false.
+    logical :: phases_written = .false., slice_proj_written = .false.
+
+    character(255) :: slice_proj_num_bases_str_uw, slice_proj_num_bases_str_v
+    character(255) :: slice_proj_results_format_uw, slice_proj_results_format_v
 
     contains 
 
@@ -43,6 +46,26 @@ module symred
         call symmops_shiftz(Lz/4, u_zp(:,:,:,1:3), u_tzp(:,:,:,1:3))
 
     end subroutine symred_init
+
+!==============================================================================
+
+    subroutine symred_proj_init
+
+        write(slice_proj_num_bases_str_uw, *) 8*ny_half
+        write(slice_proj_num_bases_str_v, *) 8*ny_half - 8
+        slice_proj_results_format_uw = "(A2,"//i4_f//","//sp_f//","//TRIM(slice_proj_num_bases_str_uw)//dp_f//")"
+        slice_proj_results_format_v = "(A2,"//i4_f//","//sp_f//","//TRIM(slice_proj_num_bases_str_v)//dp_f//")"
+
+        if (my_id == 0) then
+            open(newunit=slice_proj_ch_uw,file='slice_projections_uw.gp',status='replace')
+            write(slice_proj_ch_uw, "(A2,"//i4_len//","//sp_len//","//dp_len//")") "# ", "itime", "time", "projections"
+            
+            open(newunit=slice_proj_ch_v,file='slice_projections_v.gp',status='replace')
+            write(slice_proj_ch_v, "(A2,"//i4_len//","//sp_len//","//dp_len//")") "# ", "itime", "time", "projections"
+
+            slice_proj_written = .true.
+        end if
+    end subroutine symred_proj_init
 
 !==============================================================================
 
@@ -105,6 +128,9 @@ module symred
                         my_p_xu(ny_half),   my_p_zu(ny_half), &
                         my_p_xv(ny_half-1), my_p_zv(ny_half-1), &
                         my_p_xw(ny_half),   my_p_zw(ny_half)
+        real(dp) :: p_xu_(2*ny_half),   p_zu_(2*ny_half), &
+                    p_xv_(2*ny_half-2), p_zv_(2*ny_half-2), &
+                    p_xw_(2*ny_half),   p_zw_(2*ny_half)
 
         my_p_xu(:) = 0
         my_p_zu(:) = 0
@@ -144,6 +170,27 @@ module symred
         MPI_COMM_WORLD, mpi_err)
         call MPI_REDUCE(my_p_zw, p_zw, ny_half, MPI_COMPLEX16, MPI_SUM, 0, &
         MPI_COMM_WORLD, mpi_err)
+
+        if (my_id == 0) then
+
+            p_xu_(1:ny_half) = p_xu(:)%re
+            p_xu_(ny_half+1:) = p_xu(:)%im
+            p_xv_(1:ny_half-1) = p_xv(:)%re
+            p_xv_(ny_half:) = p_xv(:)%im
+            p_xw_(1:ny_half) = p_xw(:)%re
+            p_xw_(ny_half+1:) = p_xw(:)%im
+
+            p_zu_(1:ny_half) = p_zu(:)%re
+            p_zu_(ny_half+1:) = p_zu(:)%im
+            p_zv_(1:ny_half-1) = p_zv(:)%re
+            p_zv_(ny_half:) = p_zv(:)%im
+            p_zw_(1:ny_half) = p_zw(:)%re
+            p_zw_(ny_half+1:) = p_zw(:)%im
+
+            write(slice_proj_ch_uw, TRIM(slice_proj_results_format_uw)) "  ", itime, time, p_xu_, p_xw_, p_zu_, p_zw_
+            write(slice_proj_ch_v, TRIM(slice_proj_results_format_v)) "  ", itime, time, p_xv_, p_zv_
+
+        end if
 
     end subroutine symred_projections
 

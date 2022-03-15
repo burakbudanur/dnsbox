@@ -22,6 +22,7 @@ program main
         allocate(shapiro_vfieldk(nx_perproc, ny_half, nz, 3))
     end if
     if (compute_lyap) call lyap_init(vel_vfieldk_now)
+    if (i_slice_project > 0) call symred_proj_init
     if (slice .and. (i_project > 0 .or. i_save_sliced_fields >0)) then
         call symred_init
         allocate(sliced_vel_vfieldk_now(nx_perproc, ny_half, nz, 3))
@@ -33,6 +34,9 @@ program main
 
     do
         if (i_finish > 0 .and. itime > i_finish) exit
+
+        if (i_slice_project > 0 .and. mod(itime, i_slice_project) == 0) &
+            call symred_projections(vel_vfieldk_now)
 
         if ((i_save_sliced_fields > 0 .and. mod(itime, i_save_sliced_fields) == 0) .or. &
             (i_project > 0 .and. mod(itime, i_project) == 0)) then

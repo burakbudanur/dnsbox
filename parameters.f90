@@ -47,7 +47,8 @@ module parameters
                    i_save_sliced_fields = -1, & ! Save symmetry reduced fields
                    i_print_spectrum = -1, &
                    i_flush = -1, &
-                   i_project = -1
+                   i_project = -1, &
+                   i_slice_project = -1
 
     !# Time stepping 
     real(dp)    :: dt = 0.025_dp, &
@@ -107,7 +108,8 @@ module parameters
     namelist /initiation/ IC, random_seed, random_energy, random_smooth, &
                           t_start, i_start
     namelist /output/ i_print_stats, i_print_steps, i_save_fields, &
-                      i_print_spectrum, i_flush, i_project, i_save_sliced_fields
+                      i_print_spectrum, i_flush, i_project, i_slice_project, &
+                      i_save_sliced_fields
     namelist /time_stepping/ dt, implicitness, steptol, ncorr, adaptive_dt, &
                              dtmax, courant_target, integrate_invariant
     namelist /termination/ terminate_laminar, relerr_lam, wall_clock_limit, i_finish
@@ -303,6 +305,7 @@ module parameters
         write(out, *) 'i_print_spectrum = ', i_print_spectrum
         write(out, *) 'i_flush = ', i_flush
         write(out, *) 'i_project = ', i_project
+        write(out, *) 'i_slice_project = ', i_slice_project
 
         write(out, '(79(''=''))')
         
