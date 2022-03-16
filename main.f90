@@ -23,7 +23,7 @@ program main
     end if
     if (compute_lyap) call lyap_init(vel_vfieldk_now)
     if (i_slice_project > 0) call symred_proj_init
-    if (slice .and. (i_project > 0 .or. i_save_sliced_fields >0)) then
+    if (slice) then
         call symred_init
         allocate(sliced_vel_vfieldk_now(nx_perproc, ny_half, nz, 3))
     end if
@@ -38,8 +38,10 @@ program main
         if (i_slice_project > 0 .and. mod(itime, i_slice_project) == 0) &
             call symred_projections(vel_vfieldk_now)
 
-        if ((i_save_sliced_fields > 0 .and. mod(itime, i_save_sliced_fields) == 0) .or. &
-            (i_project > 0 .and. mod(itime, i_project) == 0)) then
+        if (slice .and. &
+            ((i_save_sliced_fields > 0 .and. mod(itime, i_save_sliced_fields) == 0) .or. &
+             (i_project > 0 .and. mod(itime, i_project) == 0) .or. &
+             (i_print_phases > 0 .and. mod(itime, i_print_phases) == 0))) then
 
             call symred_slice(vel_vfieldk_now, sliced_vel_vfieldk_now)
             call symred_phases_write

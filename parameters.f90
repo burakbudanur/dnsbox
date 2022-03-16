@@ -43,6 +43,7 @@ module parameters
     !# Results -- note i_* convention for variables in time step units
     integer(i4) :: i_print_stats = 20, &   ! Print energy, dissipation etc.
                    i_print_steps = 20, &   ! Print Courant, step error etc.
+                   i_print_phases = -1, &  ! Print slice phases
                    i_save_fields = 2000, & ! Save fields (restart files)
                    i_save_sliced_fields = -1, & ! Save symmetry reduced fields
                    i_print_spectrum = -1, &
@@ -107,7 +108,7 @@ module parameters
     namelist /physics/ forcing, Re, tilt_angle, smag_const
     namelist /initiation/ IC, random_seed, random_energy, random_smooth, &
                           t_start, i_start
-    namelist /output/ i_print_stats, i_print_steps, i_save_fields, &
+    namelist /output/ i_print_stats, i_print_steps, i_print_phases, i_save_fields, &
                       i_print_spectrum, i_flush, i_project, i_slice_project, &
                       i_save_sliced_fields
     namelist /time_stepping/ dt, implicitness, steptol, ncorr, adaptive_dt, &
@@ -300,6 +301,7 @@ module parameters
         write(out, *) 'i_start = ', i_start
         write(out, *) 'i_print_stats = ', i_print_stats
         write(out, *) 'i_print_steps = ', i_print_steps
+        write(out, *) 'i_print_phases = ', i_print_phases
         write(out, *) 'i_save_fields = ', i_save_fields
         write(out, *) 'i_save_sliced_fields = ', i_save_sliced_fields
         write(out, *) 'i_print_spectrum = ', i_print_spectrum

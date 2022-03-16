@@ -92,13 +92,13 @@ module symred
             inquire(file=TRIM(phases_file), exist=there, opened=there2)
             if (.not.there) then
             open(newunit=phases_ch,file=TRIM(phases_file),form='formatted')
-                write(phases_ch,"(A2,"//i4_len//","//"3"//sp_len//")") &
+                write(phases_ch,"(A2,"//i4_len//","//sp_len//","//"2"//dp_len//")") &
                     "# ", "itime", "time", "phi_x", "phi_z"
             end if
             if(there.and..not.there2) then
             open(newunit=phases_ch,file=TRIM(phases_file),position='append')
             end if
-            write(phases_ch,"(A2,"//i4_f//","//"3"//sp_f//")")&
+            write(phases_ch,"(A2,"//i4_f//","//sp_f//","//"2"//dp_f//")")&
                 "  ", itime, time, phi_x, phi_z
 
             phases_written = .true.
