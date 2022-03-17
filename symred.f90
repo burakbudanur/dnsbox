@@ -149,7 +149,7 @@ module symred
             my_projections_x(ny_half:2*ny_half-2) = &
                 my_projections_x(ny_half:2*ny_half-2) - imag_1 * in_vfieldk(ix_first_p,2:,1,2) / 2
             my_projections_x(2*ny_half-1) = &
-                my_projections_x(2*ny_half-1) + in_vfieldk(ix_first_p,1,1,3) / 2 / sqrt(2)
+                my_projections_x(2*ny_half-1) + in_vfieldk(ix_first_p,1,1,3) / 2 / sqrt(2.0_dp)
             my_projections_x(2*ny_half:) = &
                 my_projections_x(2*ny_half:) + in_vfieldk(ix_first_p,2:,1,3) / 2
         end if
@@ -160,14 +160,14 @@ module symred
             my_projections_x(ny_half:2*ny_half-2) = &
                 my_projections_x(ny_half:2*ny_half-2) + imag_1 * conjg(in_vfieldk(ix_first_n,2:,1,2)) / 2
             my_projections_x(2*ny_half-1) = &
-                my_projections_x(2*ny_half-1) + conjg(in_vfieldk(ix_first_n,1,1,3)) / 2 / sqrt(2)
+                my_projections_x(2*ny_half-1) + conjg(in_vfieldk(ix_first_n,1,1,3)) / 2 / sqrt(2.0_dp)
             my_projections_x(2*ny_half:) = &
                 my_projections_x(2*ny_half:) + conjg(in_vfieldk(ix_first_n,2:,1,3)) / 2
         end if
 
         if (ix_zero /= -1) then
             my_projections_z(1) = &
-                (in_vfieldk(ix_zero,1,2,1) + conjg(in_vfieldk(ix_zero,1,nz,1))) / 2 / sqrt(2)
+                (in_vfieldk(ix_zero,1,2,1) + conjg(in_vfieldk(ix_zero,1,nz,1))) / 2 / sqrt(2.0_dp)
             my_projections_z(2:ny_half) = &
                 (in_vfieldk(ix_zero,2:,2,1) + conjg(in_vfieldk(ix_zero,2:,nz,1))) / 2
             my_projections_z(ny_half+1:2*ny_half-1) = &

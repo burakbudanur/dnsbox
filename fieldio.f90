@@ -927,13 +927,13 @@ module fieldio
         call MPI_BCAST(ny1,  1, MPI_INTEGER4, 0, MPI_COMM_WORLD, mpi_err)
         call MPI_BCAST(nz1,  1, MPI_INTEGER4, 0, MPI_COMM_WORLD, mpi_err)
 
-        if (forcing /= forcing1) then
-            write(out,*) 'fieldio_read: Error, forcing is different.'
-            write(out,*) 'fieldio_read:     .in file: ', forcing
-            write(out,*) 'fieldio_read: Restart file: ', forcing1
-            flush(out)
-            error stop
-        end if 
+        ! if (forcing /= forcing1) then
+        !     write(out,*) 'fieldio_read: Error, forcing is different.'
+        !     write(out,*) 'fieldio_read:     .in file: ', forcing
+        !     write(out,*) 'fieldio_read: Restart file: ', forcing1
+        !     flush(out)
+        !     error stop
+        ! end if 
 
         if (nx/=nx1 .or. ny/=ny1 .or. nz/=nz1) then
             write(out,*) 'fieldio_read: Eror, grid is different.'

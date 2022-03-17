@@ -35,7 +35,7 @@ def main():
     dnsslice(**args)
 
 
-def dnsslice(rundir, savedir, cutpercent=20, tex=False, noshow=False):
+def dnsslice(rundir, savedir, cutpercent=20, tex=False, noshow=False, checknorms=False):
 
     dns.setPlotDefaults(tex=tex)
 
@@ -60,6 +60,7 @@ def dnsslice(rundir, savedir, cutpercent=20, tex=False, noshow=False):
     Ry = nml["symmetries"]["Ry"]
 
     ny_half = ny // 2
+
     if Ry and ny_half % 2 != 0:
         exit("Ry but ny_half is not even.")
 
@@ -74,16 +75,21 @@ def dnsslice(rundir, savedir, cutpercent=20, tex=False, noshow=False):
     data_x = np.loadtxt(rundir / "slice_projections_x.gp")
     data_z = np.loadtxt(rundir / "slice_projections_z.gp")
 
-    # # fix old projections
-    # data_x[:, 2:][:,4 * ny_half - 4] = data_x[:, 2:][:,4 * ny_half - 4] / np.sqrt(2)
-    # data_x[:, 2:][:,4 * ny_half - 3] = data_x[:, 2:][:,4 * ny_half - 3] / np.sqrt(2)
-    # data_z[:, 2:][:,0] = data_z[:, 2:][:,0] / np.sqrt(2)
-    # data_z[:, 2:][:,1] = data_z[:, 2:][:,1] / np.sqrt(2)
-    # np.savetxt(rundir / "slice_projections_x_.gp", data_x)
-    # np.savetxt(rundir / "slice_projections_z_.gp", data_z)
+    # fix old projections
+    data_x[:, 2:][:,4 * ny_half - 4] = data_x[:, 2:][:,4 * ny_half - 4] / np.sqrt(2)
+    data_x[:, 2:][:,4 * ny_half - 3] = data_x[:, 2:][:,4 * ny_half - 3] / np.sqrt(2)
+    data_z[:, 2:][:,0] = data_z[:, 2:][:,0] / np.sqrt(2)
+    data_z[:, 2:][:,1] = data_z[:, 2:][:,1] / np.sqrt(2)
+    np.savetxt(rundir / "slice_projections_x_.gp", data_x)
+    np.savetxt(rundir / "slice_projections_z_.gp", data_z)
 
-    data_x = data_x[cutpercent * len(data_x) // 100 : -cutpercent * len(data_x) // 100]
-    data_z = data_z[cutpercent * len(data_z) // 100 : -cutpercent * len(data_z) // 100]
+    if cutpercent > 0:
+        data_x = data_x[
+            cutpercent * len(data_x) // 100 : -cutpercent * len(data_x) // 100
+        ]
+        data_z = data_z[
+            cutpercent * len(data_z) // 100 : -cutpercent * len(data_z) // 100
+        ]
 
     projections_x_rview = data_x[:, 2:]
     projections_z_rview = data_z[:, 2:]
@@ -104,7 +110,15 @@ def dnsslice(rundir, savedir, cutpercent=20, tex=False, noshow=False):
         fig_phasevel_x,
         ax_phasevel_x,
     ) = opt_maximize_projection_amplitudes(
-        savedir, np.conj(projections_x), "x", times_x, nx, ny_half, nz, Lx / 2, title=title,
+        savedir,
+        np.conj(projections_x),
+        "x",
+        times_x,
+        nx,
+        ny_half,
+        nz,
+        Lx / 2,
+        title=title,
     )
     (
         fig_proj_z,
@@ -112,7 +126,15 @@ def dnsslice(rundir, savedir, cutpercent=20, tex=False, noshow=False):
         fig_phasevel_z,
         ax_phasevel_z,
     ) = opt_maximize_projection_amplitudes(
-        savedir, np.conj(projections_z), "z", times_z, nx, ny_half, nz, Lz / 2, title=title,
+        savedir,
+        np.conj(projections_z),
+        "z",
+        times_z,
+        nx,
+        ny_half,
+        nz,
+        Lz / 2,
+        title=title,
     )
 
     if not noshow:
@@ -140,15 +162,15 @@ def opt_maximize_projection_amplitudes(
         template[1, 1:, 0, 1] = -1j * coeffs[ny_half - 1 : 2 * ny_half - 2] / 4
         template[-1, 1:, 0, 1] = -1j * coeffs[ny_half - 1 : 2 * ny_half - 2] / 4
 
-        template[1, 0, 0, 2] = coeffs[2 * ny_half - 2] / 4 / np.sqrt(2)
-        template[-1, 0, 0, 2] = coeffs[2 * ny_half - 2] / 4 / np.sqrt(2)
+        template[1, 0, 0, 2] = coeffs[2 * ny_half - 2] / 2 / np.sqrt(2)
+        template[-1, 0, 0, 2] = coeffs[2 * ny_half - 2] / 2 / np.sqrt(2)
 
         template[1, 1:, 0, 2] = coeffs[2 * ny_half - 1 :] / 4
         template[-1, 1:, 0, 2] = coeffs[2 * ny_half - 1 :] / 4
 
     elif str_projections == "z":
-        template[0, 0, 1, 0] = coeffs[0] / 4 / np.sqrt(2)
-        template[0, 0, -1, 0] = coeffs[0] / 4 / np.sqrt(2)
+        template[0, 0, 1, 0] = coeffs[0] / 2 / np.sqrt(2)
+        template[0, 0, -1, 0] = coeffs[0] / 2 / np.sqrt(2)
 
         template[0, 1:, 1, 0] = coeffs[1:ny_half] / 4
         template[0, 1:, -1, 0] = coeffs[1:ny_half] / 4
@@ -160,14 +182,16 @@ def opt_maximize_projection_amplitudes(
         template[0, 1:, -1, 2] = coeffs[2 * ny_half - 1 :] / 4
 
     dns.writeState_nocompact(template, outFile=savedir / f"u_{str_projections}p.000000")
+    slicet, header = dns.readState_nocompact(savedir / f"u_{str_projections}p.000000")
+    norm = np.sqrt(dns.inprod(slicet, slicet))
 
-    projections_opt = np.einsum("ij,j", projections, coeffs, dtype=np.complex128)
+    projections_opt = np.einsum("ij,j", projections / norm, coeffs, dtype=np.complex128)
     dphases = find_dphases(projections_opt, times)
 
     figuresdir = dns.createFiguresDir(savedir)
 
     fig_proj, ax_proj = plt.subplots()
-    ax_proj.plot(times, np.abs(projections_opt)*np.sqrt(2))
+    ax_proj.plot(times, np.abs(projections_opt))
     ax_proj.set_xlabel("$t$")
     ax_proj.set_ylabel(f"$|p_{str_projections}|$")
     ax_proj.set_yscale("log")
