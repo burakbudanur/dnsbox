@@ -75,13 +75,13 @@ def dnsslice(rundir, savedir, cutpercent=20, tex=False, noshow=False, checknorms
     data_x = np.loadtxt(rundir / "slice_projections_x.gp")
     data_z = np.loadtxt(rundir / "slice_projections_z.gp")
 
-    # fix old projections
-    data_x[:, 2:][:,4 * ny_half - 4] = data_x[:, 2:][:,4 * ny_half - 4] / np.sqrt(2)
-    data_x[:, 2:][:,4 * ny_half - 3] = data_x[:, 2:][:,4 * ny_half - 3] / np.sqrt(2)
-    data_z[:, 2:][:,0] = data_z[:, 2:][:,0] / np.sqrt(2)
-    data_z[:, 2:][:,1] = data_z[:, 2:][:,1] / np.sqrt(2)
-    np.savetxt(rundir / "slice_projections_x_.gp", data_x)
-    np.savetxt(rundir / "slice_projections_z_.gp", data_z)
+    # # fix old projections
+    # data_x[:, 2:][:,4 * ny_half - 4] = data_x[:, 2:][:,4 * ny_half - 4] / np.sqrt(2)
+    # data_x[:, 2:][:,4 * ny_half - 3] = data_x[:, 2:][:,4 * ny_half - 3] / np.sqrt(2)
+    # data_z[:, 2:][:,0] = data_z[:, 2:][:,0] / np.sqrt(2)
+    # data_z[:, 2:][:,1] = data_z[:, 2:][:,1] / np.sqrt(2)
+    # np.savetxt(rundir / "slice_projections_x_.gp", data_x)
+    # np.savetxt(rundir / "slice_projections_z_.gp", data_z)
 
     if cutpercent > 0:
         data_x = data_x[
