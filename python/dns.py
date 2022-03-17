@@ -366,7 +366,7 @@ def readState_nocompact(stateFilePath):
     return state__, header
 
 
-def readState(stateFilePath):
+def readState(stateFilePath, nocompact=False):
     stateFilePath = Path(stateFilePath)
     stateFile = open(stateFilePath, "rb")
 
@@ -376,12 +376,15 @@ def readState(stateFilePath):
 
     ny_half = ny // 2
 
-    if nx - 1 >= ny_half and nx - 1 >= nz - 1:
-        return readState_xcompact(stateFilePath)
-    elif ny_half >= nx - 1 and ny_half >= nz - 1:
-        return readState_ycompact(stateFilePath)
+    if not nocompact:
+        if nx - 1 >= ny_half and nx - 1 >= nz - 1:
+            return readState_xcompact(stateFilePath)
+        elif ny_half >= nx - 1 and ny_half >= nz - 1:
+            return readState_ycompact(stateFilePath)
+        else:
+            return readState_zcompact(stateFilePath)
     else:
-        return readState_zcompact(stateFilePath)
+        return readState_nocompact(stateFilePath)
 
 
 def writeState_xcompact(
