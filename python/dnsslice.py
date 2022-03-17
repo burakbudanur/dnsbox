@@ -72,9 +72,17 @@ def dnsslice(rundir, savedir, cutpercent=20, tex=False, noshow=False):
         title = f"$\\mathrm{{Re}}={Re:.1f}$, $L=({Lx:.1f},{dns.Ly:.1f},{Lz:.1f})$, $N=({nx},{ny},{nz})$"
 
     data_x = np.loadtxt(rundir / "slice_projections_x.gp")
-    data_x = data_x[cutpercent * len(data_x) // 100 : -cutpercent * len(data_x) // 100]
-
     data_z = np.loadtxt(rundir / "slice_projections_z.gp")
+
+    # # fix old projections
+    # data_x[:, 2:][:,4 * ny_half - 4] = data_x[:, 2:][:,4 * ny_half - 4] / np.sqrt(2)
+    # data_x[:, 2:][:,4 * ny_half - 3] = data_x[:, 2:][:,4 * ny_half - 3] / np.sqrt(2)
+    # data_z[:, 2:][:,0] = data_z[:, 2:][:,0] / np.sqrt(2)
+    # data_z[:, 2:][:,1] = data_z[:, 2:][:,1] / np.sqrt(2)
+    # np.savetxt(rundir / "slice_projections_x_.gp", data_x)
+    # np.savetxt(rundir / "slice_projections_z_.gp", data_z)
+
+    data_x = data_x[cutpercent * len(data_x) // 100 : -cutpercent * len(data_x) // 100]
     data_z = data_z[cutpercent * len(data_z) // 100 : -cutpercent * len(data_z) // 100]
 
     projections_x_rview = data_x[:, 2:]
@@ -96,7 +104,7 @@ def dnsslice(rundir, savedir, cutpercent=20, tex=False, noshow=False):
         fig_phasevel_x,
         ax_phasevel_x,
     ) = opt_maximize_projection_amplitudes(
-        savedir, projections_x, "x", times_x, nx, ny_half, nz, Lx / 2, title=title,
+        savedir, np.conj(projections_x), "x", times_x, nx, ny_half, nz, Lx / 2, title=title,
     )
     (
         fig_proj_z,
@@ -104,7 +112,7 @@ def dnsslice(rundir, savedir, cutpercent=20, tex=False, noshow=False):
         fig_phasevel_z,
         ax_phasevel_z,
     ) = opt_maximize_projection_amplitudes(
-        savedir, projections_z, "z", times_z, nx, ny_half, nz, Lz / 2, title=title,
+        savedir, np.conj(projections_z), "z", times_z, nx, ny_half, nz, Lz / 2, title=title,
     )
 
     if not noshow:
@@ -132,12 +140,18 @@ def opt_maximize_projection_amplitudes(
         template[1, 1:, 0, 1] = -1j * coeffs[ny_half - 1 : 2 * ny_half - 2] / 4
         template[-1, 1:, 0, 1] = -1j * coeffs[ny_half - 1 : 2 * ny_half - 2] / 4
 
-        template[1, :, 0, 2] = coeffs[2 * ny_half - 2 :] / 4
-        template[-1, :, 0, 2] = coeffs[2 * ny_half - 2 :] / 4
+        template[1, 0, 0, 2] = coeffs[2 * ny_half - 2] / 4 / np.sqrt(2)
+        template[-1, 0, 0, 2] = coeffs[2 * ny_half - 2] / 4 / np.sqrt(2)
+
+        template[1, 1:, 0, 2] = coeffs[2 * ny_half - 1 :] / 4
+        template[-1, 1:, 0, 2] = coeffs[2 * ny_half - 1 :] / 4
 
     elif str_projections == "z":
-        template[0, :, 1, 0] = coeffs[:ny_half] / 4
-        template[0, :, -1, 0] = coeffs[:ny_half] / 4
+        template[0, 0, 1, 0] = coeffs[0] / 4 / np.sqrt(2)
+        template[0, 0, -1, 0] = coeffs[0] / 4 / np.sqrt(2)
+
+        template[0, 1:, 1, 0] = coeffs[1:ny_half] / 4
+        template[0, 1:, -1, 0] = coeffs[1:ny_half] / 4
 
         template[0, 1:, 1, 1] = -1j * coeffs[ny_half : 2 * ny_half - 1] / 4
         template[0, 1:, -1, 1] = -1j * coeffs[ny_half : 2 * ny_half - 1] / 4
@@ -153,7 +167,7 @@ def opt_maximize_projection_amplitudes(
     figuresdir = dns.createFiguresDir(savedir)
 
     fig_proj, ax_proj = plt.subplots()
-    ax_proj.plot(times, np.abs(projections_opt))
+    ax_proj.plot(times, np.abs(projections_opt)*np.sqrt(2))
     ax_proj.set_xlabel("$t$")
     ax_proj.set_ylabel(f"$|p_{str_projections}|$")
     ax_proj.set_yscale("log")
