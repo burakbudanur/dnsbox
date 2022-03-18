@@ -309,6 +309,13 @@ module parameters
         write(out, *) 'i_project = ', i_project
         write(out, *) 'i_slice_project = ', i_slice_project
 
+        if (i_slice_project > 0 .and. .not. Ry) then
+            write(out, *) &
+                'Projections onto trial slice templates is only implemented assuming Ry.'
+            flush(out)
+            error stop
+        end if
+
         write(out, '(79(''=''))')
         
         ! ---------------------------------------------------------------------

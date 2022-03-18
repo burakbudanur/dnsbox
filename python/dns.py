@@ -726,6 +726,13 @@ def wavenumbers(Lx, Lz, nx, ny_half, nz):
 
     return kx, ky, kz
 
+def positions(Lx,Lz,nx,ny,nz):
+    xs = np.array([i * (Lx / nx) for i in range(0, nx)])
+    ys = np.array([j * (Ly / ny) for j in range(0, ny)])
+    zs = np.array([k * (Lz / nz) for k in range(0, nz)])
+
+    return xs, ys, zs
+
 
 def derivative(subState, axis, Lx, Lz):
     nx, ny_half, nz = subState.shape

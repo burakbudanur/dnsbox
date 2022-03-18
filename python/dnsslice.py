@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""Produces plots of statistics of a run.
-Figures are saved in a seperate directory within the run directory, and by
-default they are shown.
-
-"""
 
 import argparse
 from pathlib import Path
@@ -15,7 +10,7 @@ import dns
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Produce an optimal slice template.")
+    parser = argparse.ArgumentParser(description="Produce the optimal slice template.")
     parser.add_argument("rundir", type=str, help="path to the run folder.")
     parser.add_argument("savedir", type=str, help="folder to save results.")
     parser.add_argument(
@@ -35,7 +30,7 @@ def main():
     dnsslice(**args)
 
 
-def dnsslice(rundir, savedir, cutpercent=20, tex=False, noshow=False, checknorms=False):
+def dnsslice(rundir, savedir, cutpercent=20, tex=False, noshow=False):
 
     dns.setPlotDefaults(tex=tex)
 
@@ -75,14 +70,6 @@ def dnsslice(rundir, savedir, cutpercent=20, tex=False, noshow=False, checknorms
     data_x = np.loadtxt(rundir / "slice_projections_x.gp")
     data_z = np.loadtxt(rundir / "slice_projections_z.gp")
 
-    # # fix old projections
-    # data_x[:, 2:][:,4 * ny_half - 4] = data_x[:, 2:][:,4 * ny_half - 4] / np.sqrt(2)
-    # data_x[:, 2:][:,4 * ny_half - 3] = data_x[:, 2:][:,4 * ny_half - 3] / np.sqrt(2)
-    # data_z[:, 2:][:,0] = data_z[:, 2:][:,0] / np.sqrt(2)
-    # data_z[:, 2:][:,1] = data_z[:, 2:][:,1] / np.sqrt(2)
-    # np.savetxt(rundir / "slice_projections_x_.gp", data_x)
-    # np.savetxt(rundir / "slice_projections_z_.gp", data_z)
-
     if cutpercent > 0:
         data_x = data_x[
             cutpercent * len(data_x) // 100 : -cutpercent * len(data_x) // 100
@@ -104,12 +91,7 @@ def dnsslice(rundir, savedir, cutpercent=20, tex=False, noshow=False, checknorms
     times_x = data_x[:, 1]
     times_z = data_z[:, 1]
 
-    (
-        fig_proj_x,
-        ax_proj_x,
-        fig_phasevel_x,
-        ax_phasevel_x,
-    ) = opt_maximize_projection_amplitudes(
+    opt_maximize_projection_amplitudes(
         savedir,
         np.conj(projections_x),
         "x",
@@ -120,12 +102,7 @@ def dnsslice(rundir, savedir, cutpercent=20, tex=False, noshow=False, checknorms
         Lx / 2,
         title=title,
     )
-    (
-        fig_proj_z,
-        ax_proj_z,
-        fig_phasevel_z,
-        ax_phasevel_z,
-    ) = opt_maximize_projection_amplitudes(
+    opt_maximize_projection_amplitudes(
         savedir,
         np.conj(projections_z),
         "z",
@@ -142,7 +119,15 @@ def dnsslice(rundir, savedir, cutpercent=20, tex=False, noshow=False, checknorms
 
 
 def opt_maximize_projection_amplitudes(
-    savedir, projections, str_projections, times, nx, ny_half, nz, L, title=None,
+    savedir,
+    projections,
+    str_projections,
+    times,
+    nx,
+    ny_half,
+    nz,
+    L,
+    title=None,
 ):
 
     u, _, _ = np.linalg.svd(
@@ -182,16 +167,15 @@ def opt_maximize_projection_amplitudes(
         template[0, 1:, -1, 2] = coeffs[2 * ny_half - 1 :] / 4
 
     dns.writeState_nocompact(template, outFile=savedir / f"u_{str_projections}p.000000")
-    slicet, header = dns.readState_nocompact(savedir / f"u_{str_projections}p.000000")
-    norm = np.sqrt(dns.inprod(slicet, slicet))
 
-    projections_opt = np.einsum("ij,j", projections / norm, coeffs, dtype=np.complex128)
+    projections_opt = np.einsum("ij,j", projections, coeffs, dtype=np.complex128)
     dphases = find_dphases(projections_opt, times)
 
     figuresdir = dns.createFiguresDir(savedir)
 
+    # slice templates have norm 1 / sqrt(8)
     fig_proj, ax_proj = plt.subplots()
-    ax_proj.plot(times, np.abs(projections_opt))
+    ax_proj.plot(times, np.abs(projections_opt) * np.sqrt(8))
     ax_proj.set_xlabel("$t$")
     ax_proj.set_ylabel(f"$|p_{str_projections}|$")
     ax_proj.set_yscale("log")
