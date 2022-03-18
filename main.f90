@@ -48,8 +48,8 @@ program main
         end if
 
         if (i_save_sliced_fields > 0 .and. itime > i_start .and. mod(itime, i_save_sliced_fields) == 0) then
-            write(file_ext, "(i6.6)") itime/i_save_fields
-            fname = 'state.'//file_ext//'_sliced'
+            write(file_ext, "(i6.6)") itime/i_save_sliced_fields
+            fname = 'sliced_state.'//file_ext
             call fieldio_write(sliced_vel_vfieldk_now)
             call run_flush_channels
         end if

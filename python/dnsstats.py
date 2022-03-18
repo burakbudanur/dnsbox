@@ -160,6 +160,7 @@ def dnsstats(
         ax.set_xlabel("$t$")
         ax.set_ylabel(f"$\\dot{{\\phi_x}} L_x / (2\\pi)$")
         ax.set_xlim(left=tphases[0], right=tphases[-2])
+        ax.set_title(title)
         fig.savefig(figuresDir / f"dphase_x.png", bbox_inches="tight")
 
         fig, ax = plt.subplots()
@@ -167,6 +168,7 @@ def dnsstats(
         ax.set_xlabel("$t$")
         ax.set_ylabel(f"$\\dot{{\\phi_z}} L_z / (2\\pi)$")
         ax.set_xlim(left=tphases[0], right=tphases[-2])
+        ax.set_title(title)
         fig.savefig(figuresDir / f"dphase_z.png", bbox_inches="tight")
 
     if not diet:
