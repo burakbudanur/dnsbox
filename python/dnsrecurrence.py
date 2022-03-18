@@ -141,9 +141,9 @@ def recurrence(
     if not reprocess:
 
         phases_data = np.loadtxt(rundir / "phases.gp")
-        tphases = phases_data[:, 0]
-        xphases = phases_data[:, 1]
-        zphases = phases_data[:, 2]
+        tphases = phases_data[:, 1]
+        xphases = phases_data[:, 2]
+        zphases = phases_data[:, 3]
 
         shifts = np.zeros((n_states, 2))
         states = deque(maxlen=n_rows)
@@ -164,7 +164,7 @@ def recurrence(
                     for j in range(n_rec + 1):
                         state_new, header = dns.readState(statefiles[j_state_new])
                         time_new = header[-1]
-                        it = np.argmin(tphases - time_new)
+                        it = np.argmin(np.abs(tphases - time_new))
                         phase_new_x = xphases[it]
                         phase_new_z = zphases[it]
 
@@ -175,7 +175,7 @@ def recurrence(
                 else:
                     state_new, header = dns.readState(statefiles[j_state_new])
                     time_new = header[-1]
-                    it = np.argmin(tphases - time_new)
+                    it = np.argmin(np.abs(tphases - time_new))
                     phase_new_x = xphases[it]
                     phase_new_z = zphases[it]
 
@@ -251,6 +251,7 @@ def recurrence(
     else:
         print("No recurrences found within set limits.")
 
+    dns.setPlotDefaults()
     # Plot recurrence data
     fig, ax = plt.subplots()
     cbar = ax.imshow(
