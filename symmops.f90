@@ -136,7 +136,7 @@ module symmops
 
     subroutine symmops_shiftx(sx, in_vfieldk, out_vfieldk)
         
-        complex(dpc), intent(in) :: in_vfieldk(:, :, :, :)
+        complex(dpc), intent(inout) :: in_vfieldk(:, :, :, :)
         complex(dpc), intent(out) :: out_vfieldk(:, :, :, :)
 
         real(dp), intent(in) :: sx
@@ -212,7 +212,7 @@ module symmops
 
     subroutine symmops_shiftz(sz, in_vfieldk, out_vfieldk)
         
-        complex(dpc), intent(in) :: in_vfieldk(:, :, :, :)
+        complex(dpc), intent(inout) :: in_vfieldk(:, :, :, :)
         complex(dpc), intent(out) :: out_vfieldk(:, :, :, :)
         
         real(dp), intent(in) :: sz
