@@ -137,6 +137,7 @@ def recurrence(
         f"Searching from time {times[0]} to time {times[n_cols - 1]} with dt {dt} and T {t_rec}.",
         flush=True,
     )
+    _, forcing, nx, ny, nz, Lx, Lz, Re, tilt_angle, _, _, _ = dns.readState(statefiles[0])
 
     if not reprocess:
 
@@ -168,8 +169,8 @@ def recurrence(
                         phase_new_x = xphases[it]
                         phase_new_z = zphases[it]
 
-                        shifts[j_state_new, 0] = find_shift_from_phase(phase_new_x)
-                        shifts[j_state_new, 1] = find_shift_from_phase(phase_new_z)
+                        shifts[j_state_new, 0] = find_shift_from_phase(phase_new_x) * Lx
+                        shifts[j_state_new, 1] = find_shift_from_phase(phase_new_z) * Lz
                         states.append(state_new)
                         j_state_new += 1
                 else:
@@ -179,8 +180,8 @@ def recurrence(
                     phase_new_x = xphases[it]
                     phase_new_z = zphases[it]
 
-                    shifts[j_state_new, 0] = find_shift_from_phase(phase_new_x)
-                    shifts[j_state_new, 1] = find_shift_from_phase(phase_new_z)
+                    shifts[j_state_new, 0] = find_shift_from_phase(phase_new_x) * Lx
+                    shifts[j_state_new, 1] = find_shift_from_phase(phase_new_z) * Lz
                     states.append(state_new)
                     j_state_new += 1
 
@@ -193,7 +194,19 @@ def recurrence(
         np.save(savedir / "recs.npy", recs)
 
     else:
-        shifts = np.loadtxt(savedir / "shifts.gp")
+        phases_data = np.loadtxt(rundir / "phases.gp")
+        tphases = phases_data[:, 1]
+        xphases = phases_data[:, 2]
+        zphases = phases_data[:, 3]
+        shifts = np.zeros((n_states, 2))
+        for i in range(n_states):
+            time_new = times[i]
+            it = np.argmin(np.abs(tphases - time_new))
+            phase_new_x = xphases[it]
+            phase_new_z = zphases[it]
+            shifts[i, 0] = find_shift_from_phase(phase_new_x) * Lx
+            shifts[i, 1] = find_shift_from_phase(phase_new_z) * Lz
+        np.savetxt(savedir / "shifts.gp", shifts)
         recs = np.load(savedir / "recs.npy")
 
     # Apply filters
@@ -224,7 +237,7 @@ def recurrence(
             statefile = statefiles[column]
             shiftx = shift_center((shifts[column + row, 0] - shifts[column, 0]) % 1)
             shiftz = shift_center((shifts[column + row, 1] - shifts[column, 1]) % 1)
-            shiftd = np.sqrt(shiftx ** 2 + shiftz ** 2) / np.sqrt(2 * 0.5 ** 2)
+            shiftd = np.sqrt(shiftx ** 2 + shiftz ** 2) / np.sqrt(Lx ** 2 + Lz ** 2)
 
             signal = [
                 d,
@@ -308,7 +321,7 @@ def shift_center(shift):
 
 def find_shift_from_phase(phase):
 
-    shift = shift_center(((phase / (2 * np.pi)) % 1 / (2 * np.pi)) % 1)
+    shift = shift_center((phase / (2 * np.pi)) % 1)
 
     return shift
 
