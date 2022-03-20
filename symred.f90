@@ -72,7 +72,7 @@ module symred
 !==============================================================================
 
     subroutine symred_slice(in_vfieldk, out_vfieldk)
-        complex(dpc), intent(in) :: in_vfieldk(:, :, :, :)
+        complex(dpc), intent(inout) :: in_vfieldk(:, :, :, :)
         complex(dpc), intent(out) :: out_vfieldk(:, :, :, :)
         real(dp) :: phi_x_r, phi_x_i, phi_z_r, phi_z_i
 

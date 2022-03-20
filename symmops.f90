@@ -138,6 +138,7 @@ module symmops
         
         complex(dpc), intent(inout) :: in_vfieldk(:, :, :, :)
         complex(dpc), intent(out) :: out_vfieldk(:, :, :, :)
+        complex(dpc) :: temp_vfieldk(ny_half, nz, 3)
 
         real(dp), intent(in) :: sx
         integer(i4) :: ix
@@ -146,14 +147,16 @@ module symmops
         
         do ix = 1, nx_perproc
             if(ix_max /= -1 .and. ix == ix_max) cycle
+
+            temp_vfieldk(:, :, 1:3) = in_vfieldk(ix, :, :, 1:3)
             
             ! Real part:
-            out_vfieldk(ix, :, :, 1:3)%re = in_vfieldk(ix, :, :, 1:3)%re * cos(kx(ix) * sx) &
-                                        + in_vfieldk(ix, :, :, 1:3)%im * sin(kx(ix) * sx)
+            out_vfieldk(ix, :, :, 1:3)%re = temp_vfieldk(:, :, 1:3)%re * cos(kx(ix) * sx) &
+                                        + temp_vfieldk(:, :, 1:3)%im * sin(kx(ix) * sx)
             
             ! Imaginary part: 
-            out_vfieldk(ix, :, :, 1:3)%im = in_vfieldk(ix, :, :, 1:3)%im * cos(kx(ix) * sx) &
-                                        - in_vfieldk(ix, :, :, 1:3)%re * sin(kx(ix) * sx)
+            out_vfieldk(ix, :, :, 1:3)%im = temp_vfieldk(:, :, 1:3)%im * cos(kx(ix) * sx) &
+                                        - temp_vfieldk(:, :, 1:3)%re * sin(kx(ix) * sx)
             
         end do
             
@@ -214,6 +217,7 @@ module symmops
         
         complex(dpc), intent(inout) :: in_vfieldk(:, :, :, :)
         complex(dpc), intent(out) :: out_vfieldk(:, :, :, :)
+        complex(dpc) :: temp_vfieldk(nx_perproc, ny_half, 3)
         
         real(dp), intent(in) :: sz
         integer(i4) :: iz
@@ -221,18 +225,17 @@ module symmops
         out_vfieldk(:, :, :, 1:3) = in_vfieldk(:, :, :, 1:3) 
         
        do iz = 1, nz
-            if(iz == iz_max) cycle;
-       
-            ! j-th index corresponds to (j - 1)-th positive wave number
-            ! corresponding negative frequency is at N - (j - 2)
+            if(iz == iz_max) cycle
+
+            temp_vfieldk(:, :, 1:3) = in_vfieldk(:, :, iz, 1:3)
            
             ! Real part:
-            out_vfieldk(:, :, iz, 1:3)%re = in_vfieldk(:, :, iz, 1:3)%re * cos(kz(iz) * sz) &
-                                        + in_vfieldk(:, :, iz, 1:3)%im * sin(kz(iz) * sz)
+            out_vfieldk(:, :, iz, 1:3)%re = temp_vfieldk(:, :, 1:3)%re * cos(kz(iz) * sz) &
+                                        + temp_vfieldk(:, :, 1:3)%im * sin(kz(iz) * sz)
             
             ! Imaginary part: 
-            out_vfieldk(:, :, iz, 1:3)%im = in_vfieldk(:, :, iz, 1:3)%im * cos(kz(iz) * sz) &
-                                        - in_vfieldk(:, :, iz, 1:3)%re * sin(kz(iz) * sz)
+            out_vfieldk(:, :, iz, 1:3)%im = temp_vfieldk(:, :, 1:3)%im * cos(kz(iz) * sz) &
+                                        - temp_vfieldk(:, :, 1:3)%re * sin(kz(iz) * sz)
             
         end do
             
