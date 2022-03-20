@@ -137,7 +137,8 @@ def recurrence(
         f"Searching from time {times[0]} to time {times[n_cols - 1]} with dt {dt} and T {t_rec}.",
         flush=True,
     )
-    _, forcing, nx, ny, nz, Lx, Lz, Re, tilt_angle, _, _, _ = dns.readState(statefiles[0])
+    _, header = dns.readState(statefiles[0])
+    forcing, nx, ny, nz, Lx, Lz, Re, tilt_angle, _, _, _ = header
 
     if not reprocess:
 
