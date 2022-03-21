@@ -33,12 +33,16 @@ module mnewton
             if (my_id == 0 .and. ims == 0) then
 
                 if (find_shift_x) then 
-                    newton_shift_x = x(i_find_period + i_find_shift_x) * scale_dex 
+                    newton_shift_x = x(i_find_period + i_find_shift_x) * scale_dex
+                else
+                    newton_shift_x = shift_x
                 end if
                 
                 if (find_shift_z) then 
                     newton_shift_z = &
-                        x(i_find_period + i_find_shift_x + 1) * scale_dez 
+                        x(i_find_period + i_find_shift_x + i_find_shift_z) * scale_dez
+                else
+                    newton_shift_z = shift_z
                 end if
 
             end if
@@ -70,7 +74,7 @@ module mnewton
                 
                 do ims=0, ms-1
 
-                    i_delta_t = ims * nnewt_pershot + 1
+                    i_delta_t = ims * nnewt_pershot + i_find_period
 
                     if (ims /= 0) then 
                         i_delta_t = i_delta_t + i_find_shift_x + i_find_shift_z
@@ -139,7 +143,7 @@ module mnewton
         do ims = 0, ms -1
             if (my_id == 0 .and. find_period) then 
                 
-                i_delta_t = ims * nnewt_pershot + 1
+                i_delta_t = ims * nnewt_pershot + i_find_period
 
                 if (ims /= 0) then 
                     i_delta_t = i_delta_t + i_find_shift_x + i_find_shift_z
@@ -188,14 +192,14 @@ module mnewton
                 d = solver_dotprod(ims, s, x)
 
                 if (my_id == 0 .and. find_shift_x) then
-                    y(i_find_period + 1) = d
+                    y(i_find_period + i_find_shift_x) = d
                 end if
 
                 call solver_vectorize(part_z_vfieldk, ims, s)
                 d = solver_dotprod(ims, s, x)
 
                 if (my_id == 0 .and. find_shift_z) then
-                    y(i_find_period + i_find_shift_x + 1) = d
+                    y(i_find_period + i_find_shift_x + i_find_shift_z) = d
                 end if
 
             end if
@@ -228,7 +232,7 @@ module mnewton
             close(un)
         end if
         
-        if (my_id == 0 .and. (i_find_period + i_find_shift_x + i_find_shift_z) > 0) then
+        if (my_id == 0 .and. nscalars > 0) then
             if (find_period) then
                 period = 0
                 do ims = 0, ms -1
@@ -260,13 +264,11 @@ module mnewton
             close(un)
 
             if (find_shift_x) then 
-                shift_x = new_x(i_find_period + 1) * scale_dex
+                shift_x = new_x(i_find_period + i_find_shift_x) * scale_dex
             end if
 
-            if (find_shift_x .and. find_shift_z) then
-                shift_z = new_x(i_find_period + 2) * scale_dez 
-            else if (find_shift_z) then
-                shift_z = new_x(i_find_period + 1) * scale_dez
+            if (find_shift_z) then
+                shift_z = new_x(i_find_period + i_find_shift_x + i_find_shift_z) * scale_dez 
             end if
 
             if (find_shift_x .or. find_shift_z) then
@@ -418,7 +420,7 @@ program newton
         if (find_period) then
             do ims = 0, ms - 1
 
-                i_delta_t = ims * nnewt_pershot + 1
+                i_delta_t = ims * nnewt_pershot + i_find_period
 
                 if (ims /= 0) then 
                     i_delta_t = i_delta_t + i_find_shift_x + i_find_shift_z
@@ -429,11 +431,11 @@ program newton
         end if
         
         if (find_shift_x) then
-            new_x(i_find_period + 1) = shift_x
+            new_x(i_find_period + i_find_shift_x) = shift_x
         end if
         
         if (find_shift_z) then 
-            new_x(i_find_period + i_find_shift_x + 1) = shift_z
+            new_x(i_find_period + i_find_shift_x + i_find_shift_z) = shift_z
         end if
 
     end if
@@ -495,12 +497,12 @@ program newton
         end if
 
         if (find_shift_x) then 
-            new_x(i_find_period + 1) = new_x(i_find_period + 1) / scale_dex 
+            new_x(i_find_period + i_find_shift_x) = new_x(i_find_period + i_find_shift_x) / scale_dex 
         end if
 
         if (find_shift_z) then 
-            new_x(i_find_period + i_find_shift_x + 1) = &
-                new_x(i_find_period + i_find_shift_x + 1) / scale_dez 
+            new_x(i_find_period + i_find_shift_x + i_find_shift_z) = &
+                new_x(i_find_period + i_find_shift_x + i_find_shift_z) / scale_dez 
         end if
 
     end if

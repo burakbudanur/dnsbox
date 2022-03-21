@@ -4,9 +4,14 @@ module solver
     use parameters
     use stats
     use run
+    use symmops
 
     real(dp), allocatable    :: periods(:), new_x(:), new_fx(:)
     integer(i4), allocatable :: ndtss(:)
+
+    logical, parameter  :: debug_drifts = .true.
+    real(dp), parameter :: dx_step = 0.0001
+    real(dp), parameter :: dz_step = 0.0002
 
     logical :: find_period = .false., &
         find_shift_x = .false., find_shift_z = .false.,&
@@ -22,7 +27,7 @@ module solver
                     i_find_period, i_find_shift_x, i_find_shift_z, &
                     nnewt_pershot, nnewt, averages_ch, nscalars = 0
     
-    real(dp)     :: period, scaleT, shift_x, scale_dex, shift_z, scale_dez, &
+    real(dp)     :: period, scaleT, shift_x = 0, scale_dex, shift_z = 0, scale_dez, &
                     rel_err=1.0e-11_dp, &
                     del=-1.0_dp, & ! delta for hookstep-trust-region
                     mndl=1.0e-13_dp, &
@@ -259,8 +264,6 @@ module solver
         ivec_0 = ims * nnewt_pershot + i_find_period &
         + i_find_shift_x + i_find_shift_z ! shifts in 0th shot
 
-        if (ims == 0) ivec_0 = ivec_0 + i_find_shift_x + i_find_shift_z
-
         ivec = 1
 
         if (nx - 1 >= ny_half .and. nx - 1 >= nz - 1) then
@@ -360,8 +363,6 @@ module solver
 
         ivec_0 = ims * nnewt_pershot + i_find_period &
         + i_find_shift_x + i_find_shift_z ! shifts in 0th shot
-
-        if (ims == 0) ivec_0 = ivec_0 + i_find_shift_x + i_find_shift_z
 
         ivec = 1
 
@@ -495,7 +496,7 @@ module solver
         
         if (my_id == 0 .and. ndts_ /= 1 .and. find_period) then 
 
-            i_delta_t = ims * nnewt_pershot + 1
+            i_delta_t = ims * nnewt_pershot + i_find_period
             if (ims /= 0) then 
                 i_delta_t = i_delta_t + i_find_shift_x + i_find_shift_z
             end if
@@ -517,6 +518,12 @@ module solver
     
             call timestep_precorr(vel_vfieldxx_now, vel_vfieldk_now, fvel_vfieldk_now)
             time = time + dt
+            
+            if (debug_drifts) then
+                call symmops_shiftx(dx_step, vel_vfieldk_now, vel_vfieldk_now)
+                call symmops_shiftz(dz_step, vel_vfieldk_now, vel_vfieldk_now)
+                call fftw_vk2x(vel_vfieldk_now, vel_vfieldxx_now)
+            end if
 
         end do
         
