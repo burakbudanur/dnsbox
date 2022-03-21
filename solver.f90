@@ -9,7 +9,7 @@ module solver
     real(dp), allocatable    :: periods(:), new_x(:), new_fx(:)
     integer(i4), allocatable :: ndtss(:)
 
-    logical, parameter  :: debug_drifts = .true.
+    logical, parameter  :: debug_drifts = .false.
     real(dp), parameter :: dx_step = 0.0001
     real(dp), parameter :: dz_step = 0.0002
 
