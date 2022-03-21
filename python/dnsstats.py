@@ -143,6 +143,34 @@ def dnsstats(
     axProdDis.set_title(title)
     figProdDis.savefig(figuresDir / "peps.png")
 
+    phasesfile = runDir / "phases.gp"
+    if Path.is_file(phasesfile):
+        data = np.loadtxt(phasesfile)
+        tphases = data[:, 1]
+        dtphases = tphases[1:] - tphases[:-1]
+        phases_x = np.unwrap(data[:, 2])
+        phases_z = np.unwrap(data[:, 3])
+        dphases_x = (phases_x[1:] - phases_x[:-1]) / dtphases
+        dphases_z = (phases_z[1:] - phases_z[:-1]) / dtphases
+
+        # Assumed Ly=2, then give Lx and Lz in units of Ly
+
+        fig, ax = plt.subplots()
+        ax.plot(tphases[:-1], dphases_x * Lx / (4 * np.pi))
+        ax.set_xlabel("$t$")
+        ax.set_ylabel(f"$\\dot{{\\phi_x}} L_x / (2\\pi)$")
+        ax.set_xlim(left=tphases[0], right=tphases[-2])
+        ax.set_title(title)
+        fig.savefig(figuresDir / f"dphase_x.png", bbox_inches="tight")
+
+        fig, ax = plt.subplots()
+        ax.plot(tphases[:-1], dphases_z * Lz / (4 * np.pi))
+        ax.set_xlabel("$t$")
+        ax.set_ylabel(f"$\\dot{{\\phi_z}} L_z / (2\\pi)$")
+        ax.set_xlim(left=tphases[0], right=tphases[-2])
+        ax.set_title(title)
+        fig.savefig(figuresDir / f"dphase_z.png", bbox_inches="tight")
+
     if not diet:
 
         # |RHS|

@@ -366,7 +366,7 @@ def readState_nocompact(stateFilePath):
     return state__, header
 
 
-def readState(stateFilePath):
+def readState(stateFilePath, nocompact=False):
     stateFilePath = Path(stateFilePath)
     stateFile = open(stateFilePath, "rb")
 
@@ -376,12 +376,15 @@ def readState(stateFilePath):
 
     ny_half = ny // 2
 
-    if nx - 1 >= ny_half and nx - 1 >= nz - 1:
-        return readState_xcompact(stateFilePath)
-    elif ny_half >= nx - 1 and ny_half >= nz - 1:
-        return readState_ycompact(stateFilePath)
+    if not nocompact:
+        if nx - 1 >= ny_half and nx - 1 >= nz - 1:
+            return readState_xcompact(stateFilePath)
+        elif ny_half >= nx - 1 and ny_half >= nz - 1:
+            return readState_ycompact(stateFilePath)
+        else:
+            return readState_zcompact(stateFilePath)
     else:
-        return readState_zcompact(stateFilePath)
+        return readState_nocompact(stateFilePath)
 
 
 def writeState_xcompact(
@@ -723,6 +726,13 @@ def wavenumbers(Lx, Lz, nx, ny_half, nz):
 
     return kx, ky, kz
 
+def positions(Lx,Lz,nx,ny,nz):
+    xs = np.array([i * (Lx / nx) for i in range(0, nx)])
+    ys = np.array([j * (Ly / ny) for j in range(0, ny)])
+    zs = np.array([k * (Lz / nz) for k in range(0, nz)])
+
+    return xs, ys, zs
+
 
 def derivative(subState, axis, Lx, Lz):
     nx, ny_half, nz = subState.shape
@@ -784,23 +794,24 @@ def fftSpecToPhys(subState, supersample=False):
             expandZ[:, :, k] = subState[:, :, k]
             if 0 < k <= nzp:
                 expandZ[:, :, -k] = subState[:, :, -k]
-        expandZ = np.fft.ifft(expandZ, axis=2, norm=None, n=nzz)
+        expandZ = np.fft.ifft(expandZ, axis=2, norm="backward", n=nzz)
 
         expandX = np.zeros((nxx, ny_half, nzz), dtype=np.complex128)
         for i in range(nxp + 1):
             expandX[i, :, :] = expandZ[i, :, :]
             if 0 < i <= nxp:
                 expandX[-i, :, :] = expandZ[-i, :, :]
-        expandX = np.fft.ifft(expandX, axis=0, norm=None, n=nxx)
+        expandX = np.fft.ifft(expandX, axis=0, norm="backward", n=nxx)
 
         expandY = np.zeros((nxx, nyy_half_pad1, nzz), dtype=np.complex128)
         expandY[:, :ny_half, :] = expandX
-        stateOut = np.fft.irfft(expandY, axis=1, norm=None, n=nyy) * (nxx * nyy * nzz)
+        stateOut = np.fft.irfft(expandY, axis=1, norm="backward", n=nyy)
     else:
         nxx, nyy, nzz = nx, 2 * ny_half, nz
         stateOut = np.swapaxes(
-            np.fft.irfftn(np.swapaxes(subState, 1, 2), s=(nxx, nzz, nyy), norm=None)
-            * (nxx * nyy * nzz),
+            np.fft.irfftn(
+                np.swapaxes(subState, 1, 2), s=(nxx, nzz, nyy), norm="backward"
+            ),
             1,
             2,
         )
@@ -837,12 +848,12 @@ def fftPhysToSpec(stateOut, supersample=False):
         nxp, nzp = nx // 2 - 1, nz // 2 - 1
 
         # FFT in y
-        expandY = np.fft.rfft(stateOut, axis=1, norm=None, n=nyy) / (nxx * nyy * nzz)
+        expandY = np.fft.rfft(stateOut, axis=1, norm="backward", n=nyy)
         # Shrink in y
         expandX = expandY[:, :ny_half, :]
 
         # FFT in x
-        expandX = np.fft.fft(expandX, axis=0, norm=None, n=nxx)
+        expandX = np.fft.fft(expandX, axis=0, norm="backward", n=nxx)
         # Shrink in x
         expandZ = np.zeros((nx, ny_half, nzz), dtype=np.complex128)
         for i in range(nxp + 1):
@@ -851,7 +862,7 @@ def fftPhysToSpec(stateOut, supersample=False):
                 expandZ[-i, :, :] = expandX[-i, :, :]
 
         # FFT in z
-        expandZ = np.fft.fft(expandZ, axis=2, norm=None, n=nzz)
+        expandZ = np.fft.fft(expandZ, axis=2, norm="backward", n=nzz)
         # Shrink in z
         subState = np.zeros((nx, ny_half, nz), dtype=np.complex128)
         for k in range(nzp + 1):
@@ -864,11 +875,14 @@ def fftPhysToSpec(stateOut, supersample=False):
         nxp, nzp = nx // 2 - 1, nz // 2 - 1
 
         subState = np.swapaxes(
-            np.fft.rfftn(np.swapaxes(stateOut, 1, 2), s=(nxx, nzz, nyy), norm=None),
+            np.fft.rfftn(
+                np.swapaxes(stateOut, 1, 2), s=(nxx, nzz, nyy), norm="backward"
+            ),
             1,
             2,
         )
         # Zero the Nyquist modes
+        subState = subState[:, :ny_half, :]
         subState[nxp + 1, :, :] = 0
         subState[:, :, nzp + 1] = 0
 

@@ -22,7 +22,8 @@ program main
         allocate(shapiro_vfieldk(nx_perproc, ny_half, nz, 3))
     end if
     if (compute_lyap) call lyap_init(vel_vfieldk_now)
-    if (slice .and. (i_project > 0 .or. i_save_sliced_fields >0)) then
+    if (i_slice_project > 0) call symred_proj_init
+    if (slice) then
         call symred_init
         allocate(sliced_vel_vfieldk_now(nx_perproc, ny_half, nz, 3))
     end if
@@ -34,16 +35,21 @@ program main
     do
         if (i_finish > 0 .and. itime > i_finish) exit
 
-        if ((i_save_sliced_fields > 0 .and. mod(itime, i_save_sliced_fields) == 0) .or. &
-            (i_project > 0 .and. mod(itime, i_project) == 0)) then
+        if (i_slice_project > 0 .and. mod(itime, i_slice_project) == 0) &
+            call symred_projections(vel_vfieldk_now)
+
+        if (slice .and. &
+            ((i_save_sliced_fields > 0 .and. mod(itime, i_save_sliced_fields) == 0) .or. &
+             (i_project > 0 .and. mod(itime, i_project) == 0) .or. &
+             (i_print_phases > 0 .and. mod(itime, i_print_phases) == 0))) then
 
             call symred_slice(vel_vfieldk_now, sliced_vel_vfieldk_now)
             call symred_phases_write
         end if
 
         if (i_save_sliced_fields > 0 .and. itime > i_start .and. mod(itime, i_save_sliced_fields) == 0) then
-            write(file_ext, "(i6.6)") itime/i_save_fields
-            fname = 'state.'//file_ext//'_sliced'
+            write(file_ext, "(i6.6)") itime/i_save_sliced_fields
+            fname = 'sliced_state.'//file_ext
             call fieldio_write(sliced_vel_vfieldk_now)
             call run_flush_channels
         end if

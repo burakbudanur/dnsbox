@@ -28,6 +28,7 @@ module fftw
 
     integer(i4) :: &
         ix_zero = -1, iy_force = -1, & ! indices of ky=kF and kx=0
+        ix_first_p = -1, ix_first_n = -1, &
         ix_max = -1, iz_max = -1, & ! indices of max(kx) and max(kz)
         my_id_ix_max, my_id_ix_max1=-1 ! id of process with max(kx)
 
@@ -172,6 +173,10 @@ module fftw
         do ix = 1, nx_perproc
             if (qx(ix) == 0) then
                 ix_zero = ix
+            else if (qx(ix) == 1) then
+                ix_first_p = ix
+            else if (qx(ix) == -1) then
+                ix_first_n = ix
             end if
         end do
 
