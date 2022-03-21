@@ -51,12 +51,12 @@ module mnewton
             
             if (ims == ms - 1 .and. find_shift_x) then 
                 call MPI_BCAST(newton_shift_x, 1, MPI_REAL8, 0, MPI_COMM_WORLD, mpi_err)
-                call symmops_shiftx(- newton_shift_x, vel_vfieldk_now, vel_vfieldk_now)
+                call symmops_shiftx(-newton_shift_x, vel_vfieldk_now, vel_vfieldk_now)
             end if
 
             if (ims == ms - 1 .and. find_shift_z) then 
                 call MPI_BCAST(newton_shift_z, 1, MPI_REAL8, 0, MPI_COMM_WORLD, mpi_err)
-                call symmops_shiftz(- newton_shift_z, vel_vfieldk_now, vel_vfieldk_now)
+                call symmops_shiftz(-newton_shift_z, vel_vfieldk_now, vel_vfieldk_now)
             end if
 
             if (ims == ms - 1 .and. (find_shift_x .or. find_shift_z) ) then 
