@@ -236,8 +236,8 @@ def recurrence(
             d = recs[row, column]
             time = times[column]
             statefile = statefiles[column]
-            shiftx = shift_center((shifts[column + row, 0] - shifts[column, 0]) % 1)
-            shiftz = shift_center((shifts[column + row, 1] - shifts[column, 1]) % 1)
+            shiftx = shift_center((shifts[column + row, 0] - shifts[column, 0]) % Lx)
+            shiftz = shift_center((shifts[column + row, 1] - shifts[column, 1]) % Lz)
             shiftd = np.sqrt(shiftx ** 2 + shiftz ** 2) / np.sqrt(Lx ** 2 + Lz ** 2)
 
             signal = [
