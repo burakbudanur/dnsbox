@@ -192,7 +192,7 @@ module mnewton
                     call solver_vectorize(part_x_vfieldk, ims, s)
                     d = solver_dotprod(ims, s, x)
 
-                    if (my_id == 0 .and.) then
+                    if (my_id == 0) then
                         y(i_find_period + i_find_shift_x) = d
                     end if
                 end if
