@@ -87,6 +87,12 @@ def main():
         dest="t_radius",
         help="radius of the minimum search area.",
     )
+    parser.add_argument(
+        "--sliced",
+        action="store_true",
+        dest="sliced",
+        help="searched on symmetry-reduced states",
+    )
 
     args = vars(parser.parse_args())
     recurrence(**args)
@@ -104,15 +110,19 @@ def recurrence(
     f_subsamp=1,
     d_max=0.15,
     t_radius=20.0,
+    sliced=False,
 ):
     rundir = Path(rundir).resolve()
     savedir = Path(savedir).resolve()
 
-    statefiles = [
-        str(stateFile.resolve()) for stateFile in rundir.glob("sliced_state.*")
-    ]
+    if sliced:
+        filenames = "sliced_state.*"
+    else:
+        filenames = "state.*"
+
+    statefiles = [str(stateFile.resolve()) for stateFile in rundir.glob(filenames)]
     times = np.array(
-        [float(stateFile.name[-6:]) * dt for stateFile in rundir.glob("sliced_state.*")]
+        [float(stateFile.name[-6:]) * dt for stateFile in rundir.glob(filenames)]
     )
     # Sort in time
     sorter = np.argsort(times)
@@ -142,12 +152,13 @@ def recurrence(
 
     if not reprocess:
 
-        phases_data = np.loadtxt(rundir / "phases.gp")
-        tphases = phases_data[:, 1]
-        xphases = phases_data[:, 2]
-        zphases = phases_data[:, 3]
+        if sliced:
+            phases_data = np.loadtxt(rundir / "phases.gp")
+            tphases = phases_data[:, 1]
+            xphases = phases_data[:, 2]
+            zphases = phases_data[:, 3]
 
-        shifts = np.zeros((n_states, 2))
+            shifts = np.zeros((n_states, 2))
         states = deque(maxlen=n_rows)
         recs = np.zeros((n_rows, n_cols), dtype=np.float64)
 
@@ -165,6 +176,23 @@ def recurrence(
                 if i == 0:
                     for j in range(n_rec + 1):
                         state_new, header = dns.readState(statefiles[j_state_new])
+                        if sliced:
+                            time_new = header[-1]
+                            it = np.argmin(np.abs(tphases - time_new))
+                            phase_new_x = xphases[it]
+                            phase_new_z = zphases[it]
+
+                            shifts[j_state_new, 0] = (
+                                find_shift_from_phase(phase_new_x) * Lx
+                            )
+                            shifts[j_state_new, 1] = (
+                                find_shift_from_phase(phase_new_z) * Lz
+                            )
+                        states.append(state_new)
+                        j_state_new += 1
+                else:
+                    state_new, header = dns.readState(statefiles[j_state_new])
+                    if sliced:
                         time_new = header[-1]
                         it = np.argmin(np.abs(tphases - time_new))
                         phase_new_x = xphases[it]
@@ -172,17 +200,6 @@ def recurrence(
 
                         shifts[j_state_new, 0] = find_shift_from_phase(phase_new_x) * Lx
                         shifts[j_state_new, 1] = find_shift_from_phase(phase_new_z) * Lz
-                        states.append(state_new)
-                        j_state_new += 1
-                else:
-                    state_new, header = dns.readState(statefiles[j_state_new])
-                    time_new = header[-1]
-                    it = np.argmin(np.abs(tphases - time_new))
-                    phase_new_x = xphases[it]
-                    phase_new_z = zphases[it]
-
-                    shifts[j_state_new, 0] = find_shift_from_phase(phase_new_x) * Lx
-                    shifts[j_state_new, 1] = find_shift_from_phase(phase_new_z) * Lz
                     states.append(state_new)
                     j_state_new += 1
 
@@ -191,23 +208,13 @@ def recurrence(
                 norm0 = np.sqrt(dns.inprod(states[0], states[0]))
                 recs[:, i] = recs[:, i] / norm0
 
-        np.savetxt(savedir / "shifts.gp", shifts)
+        if sliced:
+            np.savetxt(savedir / "shifts.gp", shifts)
         np.save(savedir / "recs.npy", recs)
 
     else:
-        phases_data = np.loadtxt(rundir / "phases.gp")
-        tphases = phases_data[:, 1]
-        xphases = phases_data[:, 2]
-        zphases = phases_data[:, 3]
-        shifts = np.zeros((n_states, 2))
-        for i in range(n_states):
-            time_new = times[i]
-            it = np.argmin(np.abs(tphases - time_new))
-            phase_new_x = xphases[it]
-            phase_new_z = zphases[it]
-            shifts[i, 0] = find_shift_from_phase(phase_new_x) * Lx
-            shifts[i, 1] = find_shift_from_phase(phase_new_z) * Lz
-        np.savetxt(savedir / "shifts.gp", shifts)
+        if sliced:
+            shifts = np.loadtxt(savedir / "shifts.gp")
         recs = np.load(savedir / "recs.npy")
 
     # Apply filters
@@ -236,19 +243,31 @@ def recurrence(
             d = recs[row, column]
             time = times[column]
             statefile = statefiles[column]
-            shiftx = shift_center((shifts[column + row, 0] - shifts[column, 0]) % Lx)
-            shiftz = shift_center((shifts[column + row, 1] - shifts[column, 1]) % Lz)
-            shiftd = np.sqrt(shiftx ** 2 + shiftz ** 2) / np.sqrt(Lx ** 2 + Lz ** 2)
+            if sliced:
+                shiftx = shift_center(
+                    (shifts[column + row, 0] - shifts[column, 0]) % Lx
+                )
+                shiftz = shift_center(
+                    (shifts[column + row, 1] - shifts[column, 1]) % Lz
+                )
+                shiftd = np.sqrt(shiftx ** 2 + shiftz ** 2) / np.sqrt(Lx ** 2 + Lz ** 2)
 
-            signal = [
-                d,
-                shiftd,
-                period,
-                shiftx,
-                shiftz,
-                time,
-                statefile,
-            ]
+                signal = [
+                    d,
+                    shiftd,
+                    period,
+                    shiftx,
+                    shiftz,
+                    time,
+                    statefile,
+                ]
+            else:
+                signal = [
+                    d,
+                    period,
+                    time,
+                    statefile,
+                ]
 
             signals.append(signal)
 
@@ -267,14 +286,15 @@ def recurrence(
 
     dns.setPlotDefaults()
     # Plot recurrence data
+
     fig, ax = plt.subplots()
     cbar = ax.imshow(
         recs,
         cmap=cmap,
         origin="lower",
         vmin=0,
-        vmax=np.amax(recs),
         interpolation="spline16",
+        aspect="auto",
         extent=[times[0], times[n_cols - 1], 0, t_rec],
     )
     ax.set_xlabel("$t$")
@@ -282,7 +302,11 @@ def recurrence(
     ax.set_xlim(left=times[0], right=times[n_cols - 1])
     ax.set_ylim(bottom=0, top=t_rec)
     colorbar(ax, cbar, label=f"$r(t,t+T)$")
-    fig.savefig(savedir / f"recs.png", bbox_inches="tight")
+    if sliced:
+        figname = "recs_sliced.png"
+    else:
+        figname = "recs.png"
+    fig.savefig(savedir / figname, bbox_inches="tight")
 
     # Plot candidates
     if len(signals_sorted) > 0:
@@ -290,10 +314,10 @@ def recurrence(
         cbar = ax.imshow(
             recs,
             cmap=cmap,
-            origin="lower",
             vmin=0,
-            vmax=np.amax(recs),
+            origin="lower",
             interpolation="spline16",
+            aspect="auto",
             extent=[times[0], times[n_cols - 1], 0, t_rec],
         )
         for index in indices:
@@ -308,7 +332,11 @@ def recurrence(
         ax.set_xlim(left=times[0], right=times[n_cols - 1])
         ax.set_ylim(bottom=0, top=t_rec)
         colorbar(ax, cbar, label=f"$r(t,t+T)$")
-        fig.savefig(savedir / f"recs_candidates.png", bbox_inches="tight")
+        if sliced:
+            figname = "recs_candidates_sliced.png"
+        else:
+            figname = "recs_candidates.png"
+        fig.savefig(savedir / figname, bbox_inches="tight")
 
 
 def shift_center(shift):

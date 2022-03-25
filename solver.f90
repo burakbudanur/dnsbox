@@ -9,10 +9,6 @@ module solver
     real(dp), allocatable    :: periods(:), new_x(:), new_fx(:)
     integer(i4), allocatable :: ndtss(:)
 
-    logical, parameter  :: debug_drifts = .false.
-    real(dp), parameter :: dx_step = 0.0001
-    real(dp), parameter :: dz_step = 0.0002
-
     logical :: find_period = .false., &
         find_shift_x = .false., find_shift_z = .false.,&
         rel_Rxy = .false., rel_Ry = .false., rel_Rz = .false., &
@@ -518,12 +514,6 @@ module solver
     
             call timestep_precorr(vel_vfieldxx_now, vel_vfieldk_now, fvel_vfieldk_now)
             time = time + dt
-            
-            if (debug_drifts) then
-                call symmops_shiftx(dx_step, vel_vfieldk_now, vel_vfieldk_now)
-                call symmops_shiftz(dz_step, vel_vfieldk_now, vel_vfieldk_now)
-                call fftw_vk2x(vel_vfieldk_now, vel_vfieldxx_now)
-            end if
 
         end do
         

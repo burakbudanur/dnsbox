@@ -2,6 +2,8 @@
 import argparse
 from pathlib import Path
 
+import numpy as np
+
 import dns
 
 
@@ -17,19 +19,29 @@ def main():
         action="store_true",
         dest="nocompact",
     )
+    parser.add_argument(
+        "--relerr",
+        action="store_true",
+        dest="relerr",
+    )
     args = vars(parser.parse_args())
     inprod = dnsinprod(**args)
-    print(f"{inprod:25.16f}")
+    print(inprod)
 
 
-def dnsinprod(state1, state2, nocompact=False):
+def dnsinprod(state1, state2, nocompact=False, relerr=False):
     state1 = Path(state1)
     state2 = Path(state2)
 
     state1Data, header1 = dns.readState(state1, nocompact=nocompact)
     state2Data, header2 = dns.readState(state2, nocompact=nocompact)
 
-    inprod = dns.inprod(state1Data, state2Data)
+    if relerr:
+        delta = state1Data - state2Data
+        normdelta = np.sqrt(dns.inprod(delta, delta))
+        inprod = normdelta / np.sqrt(dns.inprod(state1Data, state1Data))
+    else:
+        inprod = dns.inprod(state1Data, state2Data)
 
     if state1Data.shape != state2Data.shape:
         exit("Grid dimensions of the two states do not match.")
