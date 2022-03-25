@@ -183,10 +183,10 @@ def recurrence(
                             phase_new_z = zphases[it]
 
                             shifts[j_state_new, 0] = (
-                                find_shift_from_phase(phase_new_x) * Lx
+                                find_shift_from_phase(phase_new_x)
                             )
                             shifts[j_state_new, 1] = (
-                                find_shift_from_phase(phase_new_z) * Lz
+                                find_shift_from_phase(phase_new_z)
                             )
                         states.append(state_new)
                         j_state_new += 1
@@ -198,8 +198,8 @@ def recurrence(
                         phase_new_x = xphases[it]
                         phase_new_z = zphases[it]
 
-                        shifts[j_state_new, 0] = find_shift_from_phase(phase_new_x) * Lx
-                        shifts[j_state_new, 1] = find_shift_from_phase(phase_new_z) * Lz
+                        shifts[j_state_new, 0] = find_shift_from_phase(phase_new_x)
+                        shifts[j_state_new, 1] = find_shift_from_phase(phase_new_z)
                     states.append(state_new)
                     j_state_new += 1
 
@@ -245,11 +245,11 @@ def recurrence(
             statefile = statefiles[column]
             if sliced:
                 shiftx = shift_center(
-                    (shifts[column + row, 0] - shifts[column, 0]) % Lx
-                )
+                    (shifts[column + row, 0] - shifts[column, 0])
+                ) * Lx
                 shiftz = shift_center(
-                    (shifts[column + row, 1] - shifts[column, 1]) % Lz
-                )
+                    (shifts[column + row, 1] - shifts[column, 1])
+                ) * Lz
                 shiftd = np.sqrt(shiftx ** 2 + shiftz ** 2) / np.sqrt(Lx ** 2 + Lz ** 2)
 
                 signal = [

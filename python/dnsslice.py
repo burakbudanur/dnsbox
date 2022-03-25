@@ -44,7 +44,7 @@ def dnssymred(statefile, slicedir, savedir):
     pz = np.arctan2(pz_i, pz_r)
     shiftz = pz / (2 * np.pi) * Lz
     state_ = dnss.Tz(-shiftz, state_, Lx, Lz)
-    print(px,pz)
+    print(shiftx,shiftz)
 
     statefile_ = savedir / f"sliced_{statefile.name}"
     dns.writeState(
