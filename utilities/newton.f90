@@ -180,26 +180,30 @@ module mnewton
             ! contstraint, 
             ! no update in x-direction
             
-            if (ims == 0) then
+            if (ims == 0 .and. (find_shift_x .or. find_shift_z)) then
 
                 call solver_tensorize(vel_vfieldk_now, ims, new_x)
                 do k = 1, 3
-                    call diffops_partx(vel_vfieldk_now(:, :, :, k), part_x_vfieldk(:, :, :, k))
-                    call diffops_partz(vel_vfieldk_now(:, :, :, k), part_z_vfieldk(:, :, :, k))
+                    if (find_shift_x) call diffops_partx(vel_vfieldk_now(:, :, :, k), part_x_vfieldk(:, :, :, k))
+                    if (find_shift_z) call diffops_partz(vel_vfieldk_now(:, :, :, k), part_z_vfieldk(:, :, :, k))
                 end do
+                
+                if (find_shift_x) then
+                    call solver_vectorize(part_x_vfieldk, ims, s)
+                    d = solver_dotprod(ims, s, x)
 
-                call solver_vectorize(part_x_vfieldk, ims, s)
-                d = solver_dotprod(ims, s, x)
-
-                if (my_id == 0 .and. find_shift_x) then
-                    y(i_find_period + i_find_shift_x) = d
+                    if (my_id == 0 .and.) then
+                        y(i_find_period + i_find_shift_x) = d
+                    end if
                 end if
+                
+                if (find_shift_z) then
+                    call solver_vectorize(part_z_vfieldk, ims, s)
+                    d = solver_dotprod(ims, s, x)
 
-                call solver_vectorize(part_z_vfieldk, ims, s)
-                d = solver_dotprod(ims, s, x)
-
-                if (my_id == 0 .and. find_shift_z) then
-                    y(i_find_period + i_find_shift_x + i_find_shift_z) = d
+                    if (my_id == 0) then
+                        y(i_find_period + i_find_shift_x + i_find_shift_z) = d
+                    end if
                 end if
 
             end if
