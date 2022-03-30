@@ -35,11 +35,13 @@ i_start       = 0   ! Initial time step
 &output 
 i_print_stats        = 50   ! How often to compute and write statistics
 i_print_steps        = 50   ! How often to write time stepper data
+i_print_phases       = -1   ! How often to write slice phases
 i_save_fields        = 500	! How often to save state files to disk
 i_save_sliced_fields = -1	! How often to save sliced state files to disk
 i_print_spectrum     = -1   ! How often to compute spectra
 i_flush   = -1              ! How often to force flush textual data
 i_project = -1              ! How often to project onto the projection basis
+i_slice_project = -1        ! How often to project onto slice template basis
 /
 
 &time_stepping

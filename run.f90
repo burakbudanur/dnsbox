@@ -129,6 +129,10 @@ module run
             if (proj_written) flush(proj_ch)
             if (shapiro_written) flush(shapiro_ch)
             if (lyap_written) flush(lyap_out)
+            if (slice_proj_written) then
+                flush(slice_proj_ch_x)
+                flush(slice_proj_ch_z)
+            end if
         end if
     end subroutine run_flush_channels
 
@@ -146,6 +150,10 @@ module run
         if (proj_written) close(proj_ch)
         if (shapiro_written) close(shapiro_ch)
         if (lyap_written) close(lyap_out)
+        if (slice_proj_written) then
+            close(slice_proj_ch_x)
+            close(slice_proj_ch_z)
+        end if
     end subroutine run_close_channels
 
 !==============================================================================
