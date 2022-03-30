@@ -207,7 +207,8 @@ def Q_criterion(
 
     Q_level = np.array([Q])
     p = pv.Plotter(off_screen=noshow)
-
+    p.store_image=True
+    
     p.add_mesh(QQpv.outline(), color="k")
     p.add_mesh(
         QQpv.contour(Q_level),
@@ -226,8 +227,10 @@ def Q_criterion(
     p.camera.roll += 30
     p.camera.azimuth -= 45
     p.camera.roll -= 10
-
-    p.show(screenshot=figuresDir / f"{state.name}_isosurf.png")
+    
+    print('rendering')
+    p.show(screenshot=figuresDir / f"{state.name}_isosurf.png", jupyter_backend='none')
+    
     return p
 
 if __name__ == "__main__":
