@@ -1,91 +1,113 @@
-if (PoincarePD == 1) then
+if (adaptive_dt .or. (i_print_steps > 0 .and. mod(itime, i_print_steps) == 0)) then
+    call timestep_courant(vel_vfieldxx_now)
+end if
+
+if (adaptive_dt) call timestep_set_dt
+
+if (poincare) then
     ! Store the current state for possibly computing
     ! the U(t*) = Dissipation(t*) - Production(t*) = 0 intersection
     ! With directional constraint d_t U(t=t*) > 0
     
-    if ( not(mod(itime - 1, IPRINT1)) == 0 ) then
-        ! compute stats if haven't already
-        call m_stats_compute
+    if ((i_print_stats > 0 .and. .not. (mod(itime, i_print_stats) == 0)) &
+            .or. i_print_stats <= 0) then
+        call stats_compute(vel_vfieldk_now, fvel_vfieldk_now)
     end if
 
-    UPoincare = eps_v - prod
+    U_poincare = dissip - powerin
     ! Save the field for possibly computing the Poincare
     ! section intersection
-    fields(:, :, :, 25:27) = fields(:, :, :, 1:3)
+    vel_vfieldk_before = vel_vfieldk_now
+    vel_vfieldxx_before = vel_vfieldxx_now
+    fvel_vfieldk_before = fvel_vfieldk_now
+    dt_before = dt
+    time_before = time
+end if
 
-call m_step_precorr
+call timestep_precorr(vel_vfieldxx_now, vel_vfieldk_now, fvel_vfieldk_now)
+time = time + dt
+itime = itime + 1
 
-if (PoincarePD == 1) then
+if (poincare) then
     ! Check if there is a Poincare section intersection         
-    ! compute stats 
-    call m_stats_compute
-    UPoincareNext = eps_v - prod
+    call stats_compute(vel_vfieldk_now, fvel_vfieldk_now)
+    U_poincare_next = dissip - powerin
     
-    if(UPoincare < 0.0d0 .and. UPoincareNext > 0.0d0) then
+    ! If there is an intersection
+    if(U_poincare < 0 .and. U_poincare_next > 0) then
 
-
-        write(out, *) 'There is a Poincare section intersection'
-        write(out, *) 'UPoincare = ', UPoincare
-        write(out, *) 'UPoincareNext = ', UPoincareNext
-        flush(out)
-
-        ! There is an intersection
-        dthold    = dt     ! Save actual time step
-        fields(:, :, :, 28:30) = fields(:, :, :, 1:3) ! save current state
+        ! backup timestepped state
+        vel_vfieldk_after = vel_vfieldk_now
+        vel_vfieldxx_after = vel_vfieldxx_now
+        fvel_vfieldk_after = fvel_vfieldk_now
+        dt_after = dt
+        time_after = time
+        itime_after = itime
         
-        if (dabs(UPoincare) < epsPoincare) then 
+        write(file_ext, "(i6.6)") i_poincare
+        fname = 'poincare.'//file_ext
+        itime = i_poincare
+        if (abs(U_poincare) < eps_poincare) then 
             ! previous state satisfies Poincare section condition
-            wrk(:, :, :, 1:3) = fields(:, :, :, 25:27)
-        else if (dabs(UpoincareNext) < epsPoincare) then
+            time = time_before
+            dt = dt_before
+            call fieldio_write(vel_vfieldk_before)
+        else if (abs(U_poincare_next) < eps_poincare) then
             ! current state satisfies Poincare section condition
-            wrk(:, :, :, 1:3) = fields(:, :, :, 1:3)
+            call fieldio_write(vel_vfieldk_now)
         else
             ! intersecting state is inbetween
+
+            ! restore to the state before the section
+            vel_vfieldk_now = vel_vfieldk_before
+            vel_vfieldxx_now = vel_vfieldxx_before
+            dt = dt_before
             
-            errPoincare = dmin1(Upoincare, UpoincareNext)
-            deltatPoinc = dthold
-            fields(:, :, :, 1:3) = fields(:, :, :, 25:27) ! previous tstep
-
-            do while(dabs(errPoincare) < epsPoincare)
-                
-                fields(:, :, :, 25:27) = fields(:, :, :, 1:3) ! repeat state back up
-                ! starting the secant loop
+            ! starting the secant loop
+            dt_last = dt
+            do
                 ! guess the time-step
-                dt = deltatPoinc / (1 - UPoincareNext / UPoincare) ! guessing time step
-                
-                call m_step_precorr
+                dt = dt_last / (1 - U_poincare_next / U_poincare)
+                call timestep_precorr(vel_vfieldxx_now, vel_vfieldk_now, fvel_vfieldk_now)
+                time = time_before + dt
+                call stats_compute(vel_vfieldk_now, fvel_vfieldk_now)
+                U_poincare_next = dissip - powerin
 
-                ! compute production dissipation
-                call m_stats_compute
-                errPoincare = eps_v - prod
-                if (dabs(errPoincare) < epsPoincare) then
-                    ! copy the state for saving
-                    call m_fields_dealias
-                    wrk(:, :, :, 1:3) = fields(:, :, :, 1:3)
-                else if (errPoincare < 0.0d0) then
-                    UPoincare     = errPoincare
-                    deltatPoinc   = deltatPoinc - dt
-                else 
-                    UPoincareNext = errPoincare
-                    deltatPoinc   = dt
-                    fields(:, :, :, 1:3) = fields(:, :, :, 25:27) ! Restore prev. state                            
+                ! sanity check
+                if (U_poincare_next < -abs(U_poincare)) then
+                    write(out, *) "Poincare: Secant method failed."
+                    flush(out)
+                    call run_exit
+                end if
+
+                if (abs(U_poincare_next) < eps_poincare) then
+                    ! we're done
+                    call fieldio_write(vel_vfieldk_now)
+                    exit
+                else
+                    ! restore to before the section
+                    vel_vfieldk_now = vel_vfieldk_before
+                    vel_vfieldxx_now = vel_vfieldxx_before
+                    fvel_vfieldk_now = fvel_vfieldk_before
+                    time = time_before
+                    ! update dt guess
+                    dt_last = dt
                 end if
 
             end do
 
+        ! restore the timestepped state
+        vel_vfieldk_now = vel_vfieldk_after
+        vel_vfieldxx_now = vel_vfieldxx_after
+        fvel_vfieldk_now = fvel_vfieldk_after
+        dt = dt_after
+        time = time_after
+        itime = itime_after
+
         end if
         
-        ! write intersection
-        call m_runs_write_poincare
-        iPoincare = iPoincare + 1
-        ! restore the current state and the time step
-        fields(:, :, :, 1:3) = fields(:, :, :, 28:30)
-        dt = dthold
+        i_poincare = i_poincare + 1
 
     end if
     
-end if 
-
-time = time + dt  
-
-call m_runs_impose_symmetries
+end if
