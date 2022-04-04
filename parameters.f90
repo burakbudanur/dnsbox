@@ -58,7 +58,7 @@ module parameters
                    steptol = 1.0e-9_dp, &
                    dtmax = 0.1_dp, &
                    courant_target = 0.25_dp, &
-                   eps_poincare = 1.0e-6_dp
+                   eps_poincare = 1.0e-9_dp
     integer(i4) :: ncorr = 10 
     logical :: adaptive_dt = .true., &
                integrate_invariant = .false., & ! if true, use converged time 
