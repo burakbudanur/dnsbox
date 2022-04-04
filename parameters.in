@@ -30,6 +30,7 @@ random_energy = 0.1 ! Random ICs have energy random_energy * eLaminar
 random_smooth = 0.9 ! Smoothness factor for random ICs
 t_start       = 0.0 ! Initial time
 i_start       = 0   ! Initial time step
+i_poincare_start = 0
 /
 
 &output 
@@ -52,6 +53,8 @@ ncorr          = 10         ! Maximum number of corrector steps
 adaptive_dt    = T          ! T: Enable dynamic timestep sizes
 dtmax          = 0.1        ! Maximum size of time steps
 courant_target = 0.25       ! Courant number to target
+poincare       = F
+eps_poincare   = 1.0e-6
 /
 
 &termination

@@ -30,6 +30,16 @@ module run
     real(dp) :: e_diff, input_diff, diss_diff, shapiro_norm, shapiro_normdelta
     character(255) :: shapiro_file = 'shapiro.gp'
 
+    ! poincare variables
+    real(dp) :: U_poincare, U_poincare_next, dt_before, dt_after, dt_last, &
+                time_before, time_after
+    integer(i4) :: i_poincare, itime_after
+    complex(dpc), allocatable, dimension(:, :, :, :) :: &
+        vel_vfieldk_before, fvel_vfieldk_before, &
+        vel_vfieldk_after, fvel_vfieldk_after
+
+    real(dp), allocatable, dimension(:, :, :, :) :: vel_vfieldxx_before, &
+                                                    vel_vfieldxx_after
     contains
     
     subroutine run_init
@@ -42,6 +52,16 @@ module run
         allocate(vel_vfieldk_now(nx_perproc, ny_half, nz, 3))
         allocate(fvel_vfieldk_now(nx_perproc, ny_half, nz, 3))
         allocate(vel_vfieldxx_now(nyy, nzz_perproc, nxx, 3))
+
+        if (poincare) then
+            allocate(vel_vfieldk_before(nx_perproc, ny_half, nz, 3))
+            allocate(fvel_vfieldk_before(nx_perproc, ny_half, nz, 3))
+            allocate(vel_vfieldxx_before(nyy, nzz_perproc, nxx, 3))
+            allocate(vel_vfieldk_after(nx_perproc, ny_half, nz, 3))
+            allocate(fvel_vfieldk_after(nx_perproc, ny_half, nz, 3))
+            allocate(vel_vfieldxx_after(nyy, nzz_perproc, nxx, 3))
+            i_poincare = i_poincare_start
+        end if
 
         ! Initial time
         itime = i_start

@@ -34,7 +34,8 @@ module parameters
     integer(i4) :: IC = -1, &     ! Initial condition 
                                ! (-3 shapiro, -2 laminar, -1 random, 
                                !   0 state.{istart / i_save_fields)
-                   i_start = 0 ! Starting time step  
+                   i_start = 0, & ! Starting time step  
+                   i_poincare_start = 0
     integer(i8) :: random_seed = -1 ! -1 reads from /dev/urandom
     real(dp) :: random_energy = 0.1_dp, & ! (ekin_laminar) energy of the random IC
                 random_smooth = 0.9_dp, & ! smoothness factor for random IC
@@ -56,11 +57,13 @@ module parameters
                    implicitness = 0.5_dp, &
                    steptol = 1.0e-9_dp, &
                    dtmax = 0.1_dp, &
-                   courant_target = 0.25_dp
+                   courant_target = 0.25_dp, &
+                   eps_poincare = 1.0e-6_dp
     integer(i4) :: ncorr = 10 
     logical :: adaptive_dt = .true., &
-               integrate_invariant = .false. ! if true, use converged time 
-                                             ! step of an invariant solution.
+               integrate_invariant = .false., & ! if true, use converged time 
+                                                ! step of an invariant solution.
+               poincare = .false.
     
     !# Termination
     logical  :: terminate_laminar = .true. ! terminate on laminarization
@@ -107,12 +110,13 @@ module parameters
     namelist /grid/ nx, ny, nz, Lx, Lz
     namelist /physics/ forcing, Re, tilt_angle, smag_const
     namelist /initiation/ IC, random_seed, random_energy, random_smooth, &
-                          t_start, i_start
+                          t_start, i_start, i_poincare_start
     namelist /output/ i_print_stats, i_print_steps, i_print_phases, i_save_fields, &
                       i_print_spectrum, i_flush, i_project, i_slice_project, &
                       i_save_sliced_fields
     namelist /time_stepping/ dt, implicitness, steptol, ncorr, adaptive_dt, &
-                             dtmax, courant_target, integrate_invariant
+                             dtmax, courant_target, integrate_invariant, &
+                             poincare, eps_poincare
     namelist /termination/ terminate_laminar, relerr_lam, wall_clock_limit, i_finish
     namelist /debugging/ log_divergence, divergence_th, shapiro_qalpha, shapiro_qbeta, shapiro_qgamma
     namelist /symmetries/ Rxy, Ry, Rz, Sx, Sy, slice
@@ -287,6 +291,8 @@ module parameters
             adaptive_dt = .false.
             write(out, *) 'integrate_invariant = ', integrate_invariant
         end if
+        write(out, *) 'poincare = ', poincare
+        if (poincare) write(out, *) 'eps_poincare = ', eps_poincare
 
         write(out, *) 'IC = ', IC
         write(out, *) 'random_seed = ', random_seed
@@ -299,6 +305,7 @@ module parameters
 
         write(out, *) 't_start = ', t_start
         write(out, *) 'i_start = ', i_start
+        if (poincare) write(out, *) 'i_poincare_start = ', i_poincare_start
         write(out, *) 'i_print_stats = ', i_print_stats
         write(out, *) 'i_print_steps = ', i_print_steps
         write(out, *) 'i_print_phases = ', i_print_phases
