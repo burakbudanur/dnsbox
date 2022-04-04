@@ -178,6 +178,7 @@ program main
             end if
         
             U_poincare = dissip - powerin
+            call MPI_BCAST(U_poincare, 1, MPI_REAL8, 0, MPI_COMM_WORLD, mpi_err)
             ! Save the field for possibly computing the Poincare
             ! section intersection
             vel_vfieldk_before = vel_vfieldk_now
@@ -196,8 +197,10 @@ program main
             ! Check if there is a Poincare section intersection         
             call stats_compute(vel_vfieldk_now, fvel_vfieldk_now)
             U_poincare_next = dissip - powerin
+            call MPI_BCAST(U_poincare_next, 1, MPI_REAL8, 0, MPI_COMM_WORLD, mpi_err)
             
             ! If there is an intersection
+            call run_flush_channels
             if(U_poincare < 0 .and. U_poincare_next > 0) then
         
                 ! backup timestepped state
@@ -215,9 +218,13 @@ program main
                     ! previous state satisfies Poincare section condition
                     time = time_before
                     dt = dt_before
+                    write(out, *) "time = ", time, "U_poincare = ", U_poincare
+                    call run_flush_channels
                     call fieldio_write(vel_vfieldk_before)
                 else if (abs(U_poincare_next) < eps_poincare) then
                     ! current state satisfies Poincare section condition
+                    write(out, *) "time = ", time, "U_poincare_next = ", U_poincare_next
+                    call run_flush_channels
                     call fieldio_write(vel_vfieldk_now)
                 else
                     ! intersecting state is inbetween
@@ -229,20 +236,25 @@ program main
                     
                     ! starting the secant loop
                     dt_last = dt
+                    i_secant = 0
                     do
                         ! guess the time-step
+                        ! sanity check
+
                         dt = dt_last / (1 - U_poincare_next / U_poincare)
+                        if (dt < 0) then
+                            write(out, *) "Poincare: Secant method failed. dt = ", dt
+                            call run_flush_channels
+                            call run_exit
+                        end if
+
+                        write(out, *) "time = ", time, "i_secant = ", i_secant, "dt = ", dt
+                        call run_flush_channels
                         call timestep_precorr(vel_vfieldxx_now, vel_vfieldk_now, fvel_vfieldk_now)
                         time = time_before + dt
                         call stats_compute(vel_vfieldk_now, fvel_vfieldk_now)
                         U_poincare_next = dissip - powerin
-        
-                        ! sanity check
-                        if (U_poincare_next < -abs(U_poincare)) then
-                            write(out, *) "Poincare: Secant method failed."
-                            flush(out)
-                            call run_exit
-                        end if
+                        call MPI_BCAST(U_poincare_next, 1, MPI_REAL8, 0, MPI_COMM_WORLD, mpi_err)
         
                         if (abs(U_poincare_next) < eps_poincare) then
                             ! we're done
@@ -257,7 +269,8 @@ program main
                             ! update dt guess
                             dt_last = dt
                         end if
-        
+                        
+                        i_secant = i_secant + 1
                     end do
         
                 ! restore the timestepped state

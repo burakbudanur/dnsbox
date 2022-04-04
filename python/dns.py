@@ -780,6 +780,13 @@ def dissipation(state, Lx, Lz, Re):
 
     return diss
 
+def powerin(state, forcing, Re):
+    # assumes no tilting
+    if forcing == 1:
+        return -(np.pi**2 / (4*Re)) * state[0,1,0,0].imag
+    elif forcing == 2:
+        return (np.pi**2 / (4*Re)) * state[0,1,0,0].real
+
 
 def fftSpecToPhys(subState, supersample=False):
     nx, ny_half, nz = subState.shape

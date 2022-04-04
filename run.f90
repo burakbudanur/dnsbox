@@ -33,7 +33,7 @@ module run
     ! poincare variables
     real(dp) :: U_poincare, U_poincare_next, dt_before, dt_after, dt_last, &
                 time_before, time_after
-    integer(i4) :: i_poincare, itime_after
+    integer(i4) :: i_poincare, itime_after, i_secant
     complex(dpc), allocatable, dimension(:, :, :, :) :: &
         vel_vfieldk_before, fvel_vfieldk_before, &
         vel_vfieldk_after, fvel_vfieldk_after
