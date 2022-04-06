@@ -238,7 +238,7 @@ program main
 
                         dt = dt_last / (1 - U_poincare_next / U_poincare)
                         if (dt < 0) then
-                            write(out, *) "Poincare: Secant method failed. dt = ", dt, "t = ", time
+                            write(out, *) "Poincare: Secant method failed. dt = ", dt, "it = ", itime_after
                             call run_flush_channels
                             call run_exit
                         end if
@@ -257,7 +257,7 @@ program main
                             ! we haven't crossed the section, but we're closer to it
                             ! restart the search
 
-                            write(out, *) "Poincare: Restarting the secant method. t = ", time
+                            write(out, *) "Poincare: Restarting the secant method. it = ", itime_after
                             call run_flush_channels
                             
                             do while (U_poincare_next < 0 .and. U_poincare_next > U_poincare)
@@ -295,7 +295,7 @@ program main
                             dt_last = dt
                             i_secant = i_secant + 1
 
-                            write(out, *) "Poincare: Secant iteration = ", i_secant - 1, "dt = ", dt, "t = ", time
+                            write(out, *) "Poincare: Next secant iteration = ", i_secant - 1, "dt = ", dt, "it = ", itime_after
                             call run_flush_channels
                         end if
                         
