@@ -238,7 +238,7 @@ program main
 
                         dt = dt_last / (1 - U_poincare_next / U_poincare)
                         if (dt < 0) then
-                            write(out, *) "Poincare: Secant method failed. dt = ", dt
+                            write(out, *) "Poincare: Secant method failed. dt = ", dt, "t = ", time
                             call run_flush_channels
                             call run_exit
                         end if
@@ -248,22 +248,57 @@ program main
                         call stats_compute(vel_vfieldk_now, fvel_vfieldk_now)
                         U_poincare_next = dissip - powerin
                         call MPI_BCAST(U_poincare_next, 1, MPI_REAL8, 0, MPI_COMM_WORLD, mpi_err)
-        
+                        
                         if (abs(U_poincare_next) < eps_poincare) then
-                            ! we're done
+                            ! we landed close to the section, we're done
                             call fieldio_write(vel_vfieldk_now)
                             exit
+                        else if (U_poincare_next < 0 .and. U_poincare_next > U_poincare) then
+                            ! we haven't crossed the section, but we're closer to it
+                            ! restart the search
+
+                            write(out, *) "Poincare: Restarting the secant method. t = ", time
+                            call run_flush_channels
+                            
+                            do while (U_poincare_next < 0 .and. U_poincare_next > U_poincare)
+                                vel_vfieldk_before = vel_vfieldk_now
+                                vel_vfieldxx_before = vel_vfieldxx_now
+                                fvel_vfieldk_before = fvel_vfieldk_now
+                                dt_before = dt
+                                time_before = time
+                                U_poincare = U_poincare_next
+                                dt_last = dt
+                                i_secant = 0
+
+                                call timestep_precorr(vel_vfieldxx_now, vel_vfieldk_now, fvel_vfieldk_now)
+                                time = time_before + dt
+                                call stats_compute(vel_vfieldk_now, fvel_vfieldk_now)
+                                U_poincare_next = dissip - powerin
+                                call MPI_BCAST(U_poincare_next, 1, MPI_REAL8, 0, MPI_COMM_WORLD, mpi_err)
+                            end do
+
+                            ! if this do while loop quits because U_poincare_next < U_poincare
+                            ! the dt < 0 check will get triggered
+
                         else
-                            ! restore to before the section
+                            ! we either crossed the section and we're too far from it,
+                            ! or somehow we're still before the section and even
+                            ! further from before
+
+                            ! restore to the last iteration with updated
+                            ! time step
                             vel_vfieldk_now = vel_vfieldk_before
                             vel_vfieldxx_now = vel_vfieldxx_before
                             fvel_vfieldk_now = fvel_vfieldk_before
                             time = time_before
                             ! update dt guess
                             dt_last = dt
+                            i_secant = i_secant + 1
+
+                            write(out, *) "Poincare: Secant iteration = ", i_secant - 1, "dt = ", dt, "t = ", time
+                            call run_flush_channels
                         end if
                         
-                        i_secant = i_secant + 1
                     end do
         
                 ! restore the timestepped state
