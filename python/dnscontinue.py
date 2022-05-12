@@ -15,6 +15,12 @@ def main():
     )
     parser.add_argument("rundir", type=str, help="path to the run")
     parser.add_argument(
+        "-i_finish_plus",
+        type=int,
+        dest="i_finish_plus",
+        help="number of time steps to add to i_finish",
+    )
+    parser.add_argument(
         "-script",
         dest="script",
         help="Submission script. If given, submit the job by sbatch script",
@@ -25,7 +31,7 @@ def main():
     dnscontinue(**args)
 
 
-def dnscontinue(rundir, script = None):
+def dnscontinue(rundir, i_finish_plus = 0, script = None):
 
     rundir = Path(rundir)
 
@@ -36,6 +42,7 @@ def dnscontinue(rundir, script = None):
     parameters["initiation"]["ic"] = i_final_state
     itime_final = i_final_state * parameters["output"]["i_save_fields"]
     parameters["initiation"]["i_start"] = itime_final
+    parameters["termination"]["i_finish"] += i_finish_plus
 
     stat_file = rundir / "stat.gp"
     if Path.is_file(stat_file):
