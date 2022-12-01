@@ -76,3 +76,15 @@ G. Yalnız, B. Hof, N. B. Budanur,
 *Coarse Graining the State Space of a Turbulent Flow Using Periodic Orbits*. 
 Physical Review Letters **126**, 244502 (2021), 
 [arXiv:2007.02584](https://arxiv.org/abs/2007.02584).
+
+## Papers using `dnsbox`
+
+- N. B. Budanur, H. Kantz,  
+[*Scale-dependent Error Growth in Navier--Stokes Simulations*](https://doi.org/10.1103/PhysRevE.106.045102). 
+Physical Review E **106**, 045102 (2022), 
+[arXiv:2209.01064](https://arxiv.org/abs/2209.01064).
+
+- G. Yalnız, B. Hof, N. B. Budanur, 
+[*Coarse Graining the State Space of a Turbulent Flow Using Periodic Orbits*](https://doi.org/10.1103/PhysRevLett.126.244502). 
+Physical Review Letters **126**, 244502 (2021), 
+[arXiv:2007.02584](https://arxiv.org/abs/2007.02584).
