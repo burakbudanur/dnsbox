@@ -4,7 +4,7 @@ module parameters
     use io
 
     ! DO NOT EDIT ABOVE THIS LINE
-    character(7), parameter :: revision = "b434733"
+    character(7), parameter :: revision = "e5a4b16"
 
     !# Geometry & discretization
     integer(i4) :: &
@@ -27,8 +27,9 @@ module parameters
     real(dp) :: Re = 630.0_dp, &  ! Reynolds number
                 tilt_angle = 0, & ! (degrees) tilting angle
                 smag_const = 0, & ! Smagorinsky constant for LES
-                Delta_LES = 0
-    logical :: LES = .false. , tilting = .false.
+                Delta_LES = 0, & ! LES grid spacing
+                sigma_R = 0 ! Rayleigh friction constant
+    logical :: LES = .false. , tilting = .false., rayleigh_friction = .false. 
 
     !# Initiation
     integer(i4) :: IC = -1, &     ! Initial condition 
@@ -108,7 +109,7 @@ module parameters
     integer(i4) :: nsym(3,3)
 
     namelist /grid/ nx, ny, nz, Lx, Lz
-    namelist /physics/ forcing, Re, tilt_angle, smag_const
+    namelist /physics/ forcing, Re, tilt_angle, smag_const, sigma_R
     namelist /initiation/ IC, random_seed, random_energy, random_smooth, &
                           t_start, i_start, i_poincare_start
     namelist /output/ i_print_stats, i_print_steps, i_print_phases, i_save_fields, &
@@ -254,10 +255,15 @@ module parameters
         
         if (smag_const > small) then 
             write(out, *) 'smag_const = ', smag_const 
-            LES       = .true.
+            LES = .true.
             Delta_LES = Lx / nx
         end if
-        
+
+        if (sigma_R > small) then 
+            write(out, *) 'sigma_R = ', sigma_R 
+            rayleigh_friction = .true.
+        end if
+                
         if (LES .and. &
             ((.not. are_equal(dx, dy)) .or. (.not. are_equal(dx, dz)) &
              .or. (.not. are_equal(dy, dz)))) then

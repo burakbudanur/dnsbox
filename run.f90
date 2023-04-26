@@ -20,7 +20,7 @@ module run
     complex(dpc), allocatable, dimension(:, :, :, :) :: &
         vel_vfieldk_now, fvel_vfieldk_now, & ! u and F(u) now
         sliced_vel_vfieldk_now, & ! symmetry reduced u
-        shapiro_vfieldk
+        shapiro_vfieldk ! Shapiro solution
 
     real(dp), allocatable :: vel_vfieldxx_now(:, :, :, :)
 
@@ -48,11 +48,12 @@ module run
         call io_init
         call parameters_init
         call fftw_init
+        call vfield_init
 
         allocate(vel_vfieldk_now(nx_perproc, ny_half, nz, 3))
         allocate(fvel_vfieldk_now(nx_perproc, ny_half, nz, 3))
         allocate(vel_vfieldxx_now(nyy, nzz_perproc, nxx, 3))
-
+ 
         if (poincare) then
             allocate(vel_vfieldk_before(nx_perproc, ny_half, nz, 3))
             allocate(fvel_vfieldk_before(nx_perproc, ny_half, nz, 3))

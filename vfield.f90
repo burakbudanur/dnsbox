@@ -12,8 +12,18 @@ module vfield
     
     logical     :: seed_init = .false.
     integer(i8) :: seed
+    complex(dpc), allocatable, dimension(:, :, :, :) :: laminar_vfieldk ! Laminar solution
     
     contains 
+
+!==============================================================================
+
+    subroutine vfield_init
+
+        allocate(laminar_vfieldk(nx_perproc, ny_half, nz, 3))
+        call vfield_laminar(laminar_vfieldk)
+
+    end subroutine vfield_init
 
 !==============================================================================
 
