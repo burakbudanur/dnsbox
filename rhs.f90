@@ -151,10 +151,10 @@ module rhs
 
         if (rayleigh_friction) then
             fvel_vfieldk(:, :, :, 1) = fvel_vfieldk(:, :, :, 1) &
-                + sigma_R * (vel_vfieldk(:, :, :, 1) - laminar_vfieldk(:, :, :, 1)) 
+                - sigma_R * (vel_vfieldk(:, :, :, 1) - laminar_vfieldk(:, :, :, 1)) 
                 
             fvel_vfieldk(:, :, :, 3) = fvel_vfieldk(:, :, :, 3) &
-                + sigma_R * (vel_vfieldk(:, :, :, 3) - laminar_vfieldk(:, :, :, 3))             
+                - sigma_R * (vel_vfieldk(:, :, :, 3) - laminar_vfieldk(:, :, :, 3))             
         end if
 
     end subroutine rhs_nonlin_term
