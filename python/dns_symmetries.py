@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 
-from dns import (
+from dnsbox import (
     isEven,
     wavenumbers,
 )

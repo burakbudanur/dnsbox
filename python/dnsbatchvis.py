@@ -8,7 +8,7 @@ import pyvista as pv
 from joblib import Parallel, delayed
 from tqdm import tqdm
 
-import dns
+import dnsbox as dns
 
 
 def_n_jobs = len(psutil.Process().cpu_affinity())

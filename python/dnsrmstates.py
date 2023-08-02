@@ -5,7 +5,7 @@ from pathlib import Path
 from subprocess import call
 import numpy as np
 
-import dns
+import dnsbox as dns
 
 
 def main():

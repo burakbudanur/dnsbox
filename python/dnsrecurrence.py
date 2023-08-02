@@ -13,7 +13,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.ndimage import minimum_filter
 from tqdm.auto import tqdm
 
-import dns
+import dnsbox as dns
 
 cmap = "Greys"
 

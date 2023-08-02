@@ -6,7 +6,7 @@ from subprocess import call
 import numpy as np
 import os
 
-import dns
+import dnsbox as dns
 
 
 def main():

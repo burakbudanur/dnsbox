@@ -6,7 +6,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
-import dns
+import dnsbox as dns
 
 
 def main():
