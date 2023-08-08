@@ -35,7 +35,7 @@ def dnsrmstates(rundir, n):
         for state in states:
             i_state = int(state.name[-6:]) 
             if i_state%n == 0:
-                state.replace(Path(f'state.{i_state//n:06}'))
+                state.replace(rundir / Path(f'state.{i_state//n:06}'))
             else: 
                 state.unlink()
 
@@ -43,7 +43,7 @@ def dnsrmstates(rundir, n):
         for state in perturbed_states:
             i_state = int(state.name[-6:]) 
             if i_state%n == 0:
-                state.replace(Path(f'perturb.{i_state//n:06}'))
+                state.replace(rundir / Path(f'perturb.{i_state//n:06}'))
             else: 
                 state.unlink()
 
