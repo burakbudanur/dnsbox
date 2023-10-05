@@ -133,9 +133,9 @@ def dnsstats(
 
     if sigma_R > 0:
         if abs(tilt_angle) > 0:
-            title = f"$\\mathrm{{Re}}={Re:.1f}$, $\\sigma_R={sigma_R:.1f}$, $L=({Lx:.1f},{dns.Ly:.1f},{Lz:.1f})$, $\\theta={tilt_angle:.1f}$, $N=({nx},{ny},{nz})$"
+            title = f"$\\mathrm{{Re}}={Re:.1f}$, $\\sigma_R={sigma_R:.2f}$, $L=({Lx:.1f},{dns.Ly:.1f},{Lz:.1f})$, $\\theta={tilt_angle:.1f}$, $N=({nx},{ny},{nz})$"
         else:
-            title = f"$\\mathrm{{Re}}={Re:.1f}$, $\\sigma_R={sigma_R:.1f}$, $L=({Lx:.1f},{dns.Ly:.1f},{Lz:.1f})$, $N=({nx},{ny},{nz})$"
+            title = f"$\\mathrm{{Re}}={Re:.1f}$, $\\sigma_R={sigma_R:.2f}$, $L=({Lx:.1f},{dns.Ly:.1f},{Lz:.1f})$, $N=({nx},{ny},{nz})$"
     else:
         if abs(tilt_angle) > 0:
             title = f"$\\mathrm{{Re}}={Re:.1f}$, $L=({Lx:.1f},{dns.Ly:.1f},{Lz:.1f})$, $\\theta={tilt_angle:.1f}$, $N=({nx},{ny},{nz})$"
