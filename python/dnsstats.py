@@ -20,12 +20,12 @@ def main():
     parser.add_argument("runDir", type=str, help="path to the run folder.")
     parser.add_argument(
         "Ni",
-        type=int if "--t" not in argv else float,
+        type=int if "--tfilter" not in argv else float,
         help="initial line number in stat.gp, or if --tfilter, initial time.",
     )
     parser.add_argument(
         "Nf",
-        type=int if "--t" not in argv else float,
+        type=int if "--tfilter" not in argv else float,
         help="final line number if stat.gp, or if --tfilter, final time.",
     )
     parser.add_argument(
