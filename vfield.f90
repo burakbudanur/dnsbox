@@ -94,6 +94,36 @@ module vfield
 
 !==============================================================================
 
+    subroutine vfield_norm2_horizontal(vfieldk, res, allreduce)
+
+        complex(dpc), intent(in) :: vfieldk(:, :, :, :)
+        real(dp), intent(out) :: res
+        logical, intent(in) :: allreduce
+        real(dp)          :: res1
+        complex(dpc)      :: dummy
+        _indices
+
+        res1 = 0
+        _loop_spec_begin
+            dummy = conjg(vfieldk(ix,iy,iz,1)) * vfieldk(ix,iy,iz,1) + &
+                    conjg(vfieldk(ix,iy,iz,3)) * vfieldk(ix,iy,iz,3)
+            ! correct for double counting
+            if (iy == 1) dummy = dummy * 0.5_dp
+            res1 = res1 + dummy%re
+        _loop_spec_end
+
+        if (.not. allreduce) then
+            call MPI_REDUCE(res1, res, 1, MPI_REAL8, MPI_SUM, 0, &
+            MPI_COMM_WORLD, mpi_err)
+        else
+            call MPI_ALLREDUCE(res1, res, 1, MPI_REAL8, MPI_SUM, &
+            MPI_COMM_WORLD, mpi_err)
+        end if
+        
+    end subroutine vfield_norm2_horizontal
+
+!==============================================================================
+
     subroutine vfield_norm2(vfieldk, res, allreduce)
         complex(dpc), intent(in) :: vfieldk(:, :, :, :)
         logical, intent(in) :: allreduce

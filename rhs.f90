@@ -115,6 +115,9 @@ module rhs
             do n = 1, 3
                 div = div + vfield_coordinatek(ix,iy,iz,n) * advect(n)
             end do
+            
+            ! Extra terms to the pressure gradient due to non-divergence-free forcing terms
+            if(rayleigh_friction) div = div + vfield_coordinatek(ix, iy, iz, 2) * vel_vfieldk(ix, iy, iz, 2) * sigma_R
 
             do n = 1, 3
                 fvel_vfieldk(ix,iy,iz,n) = advect(n) &
@@ -129,22 +132,22 @@ module rhs
             if (tilting) then
                 if (forcing == 1) then ! sine
                     fvel_vfieldk(ix_zero,iy_force,1,1) = fvel_vfieldk(ix_zero,iy_force,1,1) &
-                            - imag_1 * cos(tilt_angle * PI / 180.0_dp) * 0.5_dp * PI**2 / (4.0_dp*Re)
+                            - imag_1 * cos(tilt_angle * PI / 180.0_dp) * 0.5_dp * amp / (4.0_dp*Re)
                     fvel_vfieldk(ix_zero,iy_force,1,3) = fvel_vfieldk(ix_zero,iy_force,1,3) &
-                            - imag_1 * sin(tilt_angle * PI / 180.0_dp) * 0.5_dp * PI**2 / (4.0_dp*Re)
+                            - imag_1 * sin(tilt_angle * PI / 180.0_dp) * 0.5_dp * amp / (4.0_dp*Re)
                 elseif (forcing == 2) then ! cosine
                     fvel_vfieldk(ix_zero,iy_force,1,1) = fvel_vfieldk(ix_zero,iy_force,1,1) &
-                            + cos(tilt_angle * PI / 180.0_dp) * 0.5_dp * PI**2 / (4.0_dp*Re)
+                            + cos(tilt_angle * PI / 180.0_dp) * 0.5_dp * amp / (4.0_dp*Re)
                     fvel_vfieldk(ix_zero,iy_force,1,3) = fvel_vfieldk(ix_zero,iy_force,1,3) &
-                            + sin(tilt_angle * PI / 180.0_dp) * 0.5_dp * PI**2 / (4.0_dp*Re)
+                            + sin(tilt_angle * PI / 180.0_dp) * 0.5_dp * amp / (4.0_dp*Re)
                 end if
             else
                 if (forcing == 1) then ! sine
                     fvel_vfieldk(ix_zero,iy_force,1,1) = fvel_vfieldk(ix_zero,iy_force,1,1) &
-                            - imag_1 * 0.5_dp * PI**2 / (4.0_dp*Re)
+                            - imag_1 * 0.5_dp * amp / (4.0_dp*Re)
                 elseif (forcing == 2) then ! cosine
                     fvel_vfieldk(ix_zero,iy_force,1,1) = fvel_vfieldk(ix_zero,iy_force,1,1) &
-                            + 0.5_dp * PI**2 / (4.0_dp*Re)
+                            + 0.5_dp * amp / (4.0_dp*Re)
                 end if
             end if            
         end if
