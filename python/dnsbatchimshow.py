@@ -8,7 +8,7 @@ from joblib import Parallel, delayed
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
-import dns
+import dnsbox as dns
 from dnsimshow import dnsimshow
 
 cmap = "Greys"

@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 from tqdm import tqdm
 
-import dns
+import dnsbox as dns
 
 
 def main():

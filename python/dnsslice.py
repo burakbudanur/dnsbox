@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-import dns
+import dnsbox as dns
 import dns_symmetries as dnss
 
 
