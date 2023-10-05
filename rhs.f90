@@ -117,7 +117,7 @@ module rhs
             end do
             
             ! Extra terms to the pressure gradient due to non-divergence-free forcing terms
-            if(rayleigh_friction) div = div + vfield_coordinatek(ix, iy, iz, 2) * vel_vfieldk(ix, iy, iz, 2) * sigma_R
+            if (rayleigh_friction) div = div + vfield_coordinatek(ix, iy, iz, 2) * vel_vfieldk(ix, iy, iz, 2) * sigma_R
 
             do n = 1, 3
                 fvel_vfieldk(ix,iy,iz,n) = advect(n) &

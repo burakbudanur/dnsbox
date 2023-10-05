@@ -265,7 +265,6 @@ def dnsstats(
         if Ry:
             f_ray *= ny / (ny - 2)
         axf.plot(stats[:, 1], f_ray)
-        axf.legend()
     
         axf.set_title(title)
         figf.savefig(figuresDir / "v2_avg.png")
