@@ -120,7 +120,7 @@ module symred
         call vfield_inprod(in_vfieldk(:,:,:,1:3), u_txp(:,:,:,1:3), phi_x_i, .true.)
 
         phi_x = atan2(phi_x_i, phi_x_r)
-        call symmops_shiftx(-(phi_x/(2*pi))*Lx, in_vfieldk(:,:,:,1:3), out_vfieldk(:,:,:,1:3))
+        call symmops_shiftx(-(phi_x/(2.0_dp*pi))*Lx, in_vfieldk(:,:,:,1:3), out_vfieldk(:,:,:,1:3))
 
         ! slice in z
 
@@ -128,7 +128,7 @@ module symred
         call vfield_inprod(out_vfieldk(:,:,:,1:3), u_tzp(:,:,:,1:3), phi_z_i, .true.)
 
         phi_z = atan2(phi_z_i, phi_z_r)
-        call symmops_shiftz(-(phi_z/(2*pi))*Lz, out_vfieldk(:,:,:,1:3), out_vfieldk(:,:,:,1:3))
+        call symmops_shiftz(-(phi_z/(2.0_dp*pi))*Lz, out_vfieldk(:,:,:,1:3), out_vfieldk(:,:,:,1:3))
 
     end subroutine symred_slice
 

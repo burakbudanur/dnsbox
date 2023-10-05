@@ -10,54 +10,21 @@ module stats
     use rhs
     use timestep
 
-    real(dp) :: ekin, powerin, enstrophy, dissip, norm_rhs
+    real(dp) :: ekin, powerin, enstrophy, dissip, norm_rhs, &
+                dissip_ray, input_ray, proj_lam
 
     integer(i4) :: stats_stat_ch, stats_specx_ch, stats_specy_ch, &
-        stats_specz_ch
-    logical :: stats_stat_written = .false., stats_specs_written = .false.
+                   stats_specz_ch, stats_ray_ch
+    logical :: stats_stat_written = .false., stats_specs_written = .false., &
+               stats_ray_written = .false.
     
     character(255) :: stats_stat_file = 'stat.gp', &
                       stats_specx_file = 'specs_x.gp', &
                       stats_specy_file = 'specs_y.gp', &
-                      stats_specz_file = 'specs_z.gp'
+                      stats_specz_file = 'specs_z.gp', &
+                      stats_ray_file = 'stat_ray.gp'
 
     contains 
-
-!==============================================================================
-
-    subroutine stats_compute_powerin(vfieldk)
-        complex(dpc), intent(in)  :: vfieldk(:, :, :, :)
-        real(dp) :: my_powerin
-
-        my_powerin = 0
-        if (ix_zero /= -1) then
-            if (tilting) then
-                if (forcing == 1) then ! sine
-                    my_powerin = -cos(tilt_angle * PI / 180.0_dp) * (PI**2 / (4.0_dp * Re)) &
-                                    * vfieldk(ix_zero,iy_force,1,1)%im &
-                                 -sin(tilt_angle * PI / 180.0_dp) * (PI**2 / (4.0_dp * Re)) &
-                                    * vfieldk(ix_zero,iy_force,1,3)%im
-                elseif (forcing == 2) then ! cosine
-                    ! This may require thinking in the presence of drag
-                    my_powerin = cos(tilt_angle * PI / 180.0_dp) * (PI**2 / (4.0_dp * Re)) &
-                                                        * vfieldk(ix_zero,iy_force,1,1)%re  &
-                                 + sin(tilt_angle * PI / 180.0_dp) * (PI**2 / (4.0_dp * Re)) &
-                                                        * vfieldk(ix_zero,iy_force,1,3)%re
-                end if
-            else
-                if (forcing == 1) then ! sine
-                    my_powerin = -(PI**2 / (4.0_dp * Re)) * vfieldk(ix_zero,iy_force,1,1)%im
-                elseif (forcing == 2) then ! cosine
-                    ! This may require thinking in the presence of drag
-                    my_powerin = (PI**2 / (4.0_dp * Re)) * vfieldk(ix_zero,iy_force,1,1)%re 
-                end if
-            end if
-        end if
-
-        call MPI_REDUCE(my_powerin, powerin, 1, MPI_REAL8, MPI_SUM, 0, &
-        MPI_COMM_WORLD, mpi_err)
-
-    end subroutine stats_compute_powerin
 
 !==============================================================================
 
@@ -65,15 +32,32 @@ module stats
         complex(dpc), intent(in), dimension(:, :, :, :)  :: &
              vfieldk, fvfieldk
 
+        real(dp) :: norm2_hor
+
         ! Kinetic energy
         call vfield_norm2(vfieldk, ekin, .false.)
 
         ! Power input
-        call stats_compute_powerin(vfieldk)
+        ! proj_lam is the inner product with the laminar state...
+        call vfield_inprod(vfieldk, laminar_vfieldk, proj_lam, .false.)
+        proj_lam = 2.0_dp * proj_lam ! get rid of the 1/2 factor
+        ! ...which is proportional to the inner product with the forcing
+        powerin = (amp / (4.0_dp * Re)) * proj_lam
                 
-        ! Dissipation
+        ! Viscous dissipation
         call vfield_enstrophy(vfieldk, enstrophy, .false.)
         dissip = 2.0_dp * enstrophy / Re
+
+        ! Input and dissipation due to Rayleigh friction
+        if (rayleigh_friction) then
+            input_ray = sigma_R * proj_lam
+            powerin = powerin + input_ray
+
+            call vfield_norm2_horizontal(vfieldk, norm2_hor, .false.)
+
+            dissip_ray = 2.0_dp * sigma_R * norm2_hor
+            dissip = dissip + dissip_ray
+        end if
 
         ! norm of rhs
         call vfield_norm(fvfieldk,norm_rhs,.false.)
@@ -172,16 +156,32 @@ module stats
             inquire(file=TRIM(stats_stat_file), exist=there, opened=there2)
             if (.not.there) then
             open(newunit=stats_stat_ch,file=TRIM(stats_stat_file),form='formatted')
-                write(stats_stat_ch,"(A2,"//i4_len//","//"5"//sp_len//")") &
-                    "# ", "itime", "time", "ekin", "powerin", "dissip", "norm_rhs"
+                write(stats_stat_ch,"(A2,"//i4_len//","//"6"//sp_len//")") &
+                    "# ", "itime", "time", "ekin", "powerin", "dissip", "norm_rhs", "proj_lam"
             end if
             if(there.and..not.there2) then
             open(newunit=stats_stat_ch,file=TRIM(stats_stat_file),position='append')
             end if
-            write(stats_stat_ch,"(A2,"//i4_f//","//"5"//sp_f//")")&
-                "  ", itime, time, ekin, powerin, dissip, norm_rhs
+            write(stats_stat_ch,"(A2,"//i4_f//","//"6"//sp_f//")")&
+                "  ", itime, time, ekin, powerin, dissip, norm_rhs, proj_lam
 
            stats_stat_written = .true.
+
+            if (rayleigh_friction) then
+                inquire(file=TRIM(stats_ray_file), exist=there, opened=there2)
+                if (.not.there) then
+                open(newunit=stats_ray_ch,file=TRIM(stats_ray_file),form='formatted')
+                    write(stats_ray_ch,"(A2,"//i4_len//","//"3"//sp_len//")") &
+                        "# ", "itime", "time", "input_ray", "dissip_ray"
+                end if
+                if(there.and..not.there2) then
+                open(newunit=stats_ray_ch,file=TRIM(stats_ray_file),position='append')
+                end if
+                write(stats_ray_ch,"(A2,"//i4_f//","//"3"//sp_f//")")&
+                    "  ", itime, time, input_ray, dissip_ray
+
+                stats_ray_written = .true.
+            end if
 
         end if
 

@@ -69,7 +69,7 @@ def dnsprofile(
 
         # measure along the forcing
         if abs(tilt_angle) > 0:
-            stateIn = dns.tilt_state(stateIn, tilt_angle)
+            stateIn = dns.tilt_state(stateIn, -tilt_angle)
 
     else:
         # average many states
@@ -83,7 +83,7 @@ def dnsprofile(
 
             # measure along the forcing
             if abs(tilt_angle) > 0:
-                stateIn_ = dns.tilt_state(stateIn_, tilt_angle)
+                stateIn_ = dns.tilt_state(stateIn_, -tilt_angle)
             stateIn += stateIn_
 
         # profile of the average
@@ -99,7 +99,10 @@ def dnsprofile(
 
     kF = (2 * np.pi / dns.Ly) * dns.qF
     ys = np.array([j * (dns.Ly / ny) for j in range(0, ny)])
-    lamvx = np.sin(kF * ys)
+    if forcing == 1:
+        lamvx = np.sin(kF * ys)
+    elif forcing == 2:
+        lamvx = np.cos(kF * ys)
 
     yLabel = "$y$"
 
@@ -113,8 +116,10 @@ def dnsprofile(
 
     # profiles
     fig, ax = plt.subplots()
-    ax.plot(velx_profile[:ny_display], ys[:ny_display])
-    ax.plot(lamvx[:ny_display], ys[:ny_display], linestyle="--")
+    ax.plot(velx_profile[:ny_display], ys[:ny_display], color="C0")
+    ax.scatter(velx_profile[:ny_display], ys[:ny_display], color="C0")
+    ax.plot(lamvx[:ny_display], ys[:ny_display], linestyle="--", color="C1")
+    ax.scatter(lamvx[:ny_display], ys[:ny_display], linestyle="--", color="C1")
     ax.set_xlabel(f"$\\langle u \\rangle_{{xz}}$")
     ax.set_ylabel(yLabel)
     ax.set_ylim(bottom=ys[0], top=ys[ny_display - 1])

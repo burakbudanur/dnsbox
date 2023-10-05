@@ -11,7 +11,7 @@ forcing    = 1     ! 0: none, 1: sine, 2: cosine
 Re         = 630.0 ! Reynolds number
 tilt_angle = 0.0   ! (degrees)
 smag_const = 0.0   ! Smagorinsky constant (0: DNS, >0: LES)
-sigma_R = 1e-2     ! Rayleigh friction constant
+sigma_R    = 0.0   ! Rayleigh friction constant
 /
 
 &symmetries
