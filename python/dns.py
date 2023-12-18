@@ -21,7 +21,15 @@ nStretch = 3
 
 
 def isEven(N):
-    # Return True if N is even, False otherwise
+    """
+    Returns True if the given number N is even, otherwise returns False.
+
+    Args:
+        N (int or float): A number to check if it's even or not.
+
+    Returns:
+        bool: True if the number is even, False otherwise.
+    """
 
     if N % 2 == 0:
         return True
@@ -30,6 +38,16 @@ def isEven(N):
 
 
 def createFiguresDir(mainDir):
+    """
+    This function creates a directory for storing figures if it does not already
+    exist
+    
+    Args:
+        mainDir ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     mainDir = Path(mainDir)
     figuresDir = mainDir / figuresDirName
     # Create it if it doesn't exist
@@ -40,7 +58,12 @@ def createFiguresDir(mainDir):
 
 
 def setPlotDefaults(tex=False):
-    # Used to apply some sane plotting defaults.
+    """
+    [Summary of the function setPlotDefaults]
+
+    Args:
+        tex (bool, optional): [description]. Defaults to False.
+    """
 
     rcParams.update(
         {
@@ -72,7 +95,15 @@ def setPlotDefaults(tex=False):
 
 
 def readParameters(parametersFile):
-    """Reads parameters.in, returns parameters in a dictionary."""
+    """
+    Reads input parameters from an XML file in F95 format
+
+    Args:
+        parametersFile (str): Path to the input parameters file
+
+    Returns:
+        dict: A dictionary containing the input parameters.
+    """
     import f90nml
 
     # Convert to Path
@@ -84,6 +115,17 @@ def readParameters(parametersFile):
 
 
 def writeParameters(params, parametersFile):
+    """
+    Write the provided `params` to a file located at `parametersFile`.
+    
+    Parameters:
+    - params ([type]): The parameters to be written to the file.
+    - parametersFile ([type]): The path of the file where the parameters will be
+    written.
+    
+    Returns:
+        None
+    """
     parametersFile = Path(parametersFile)
     with open(parametersFile, "w") as f:
         params.write(f)
@@ -367,6 +409,18 @@ def readState_nocompact(stateFilePath):
 
 
 def readState(stateFilePath, nocompact=False):
+    """
+    Read state data from a file.
+
+    Args:
+        stateFilePath ([type]): Path to the state file.
+        nocompact (bool, optional): If True, use compact storage format.
+        Defaults to False.
+
+    Returns:
+        [type]: The state data in the desired format.
+    """
+    
     stateFilePath = Path(stateFilePath)
     stateFile = open(stateFilePath, "rb")
 
@@ -641,7 +695,22 @@ def writeState(
     time=0.0,
     outFile="state.000000",
 ):
+    """
+    [Summary of the function writeState]
 
+    Args:
+        state ([type]): [description]
+        forcing (int, optional): [description]. Defaults to 1.
+        Lx (int, optional): [description]. Defaults to 4.
+        Lz (int, optional): [description]. Defaults to 2.
+        Re (float, optional): [description]. Defaults to 628.3185307179584.
+        tilt_angle (float, optional): [description]. Defaults to 0.0.
+        dt (float, optional): [description]. Defaults to 0.03183098861837907.
+        itime (int, optional): [description]. Defaults to 0.
+        time (float, optional): [description]. Defaults to 0.0.
+        outFile (str, optional): [description]. Defaults to "state.000000".
+    """
+    
     nx, ny_half, nz, _ = state.shape
 
     if nx - 1 >= ny_half and nx - 1 >= nz - 1:
@@ -686,8 +755,17 @@ def writeState(
 
 
 def inprod(state1, state2):
-    # outputs only the real part of the inner product
+    """
+    Return the inproduct of two states.
 
+    Args:
+        state1 ([type]): The first state vector
+        state2 ([type]): The second state vector
+
+    Returns:
+        [type]: The inproduct of two states
+    """
+    
     if state1.shape != state2.shape:
         exit("u1 and u2 have different shapes.")
 
@@ -704,6 +782,19 @@ def inprod(state1, state2):
 
 
 def wavenumbers(Lx, Lz, nx, ny_half, nz):
+    """
+    Calculate wavenumbers for a 3D grid in Fourier space.
+    
+    Args:
+        Lx ([type]): Length of the x-axis
+        Lz ([type]): Length of the z-axis
+        nx ([type]): Number of points along the x-axis
+        ny_half ([type]): Number of points along the y-axis (evenly spaced)
+        nz ([type]): Number of points along the z-axis
+        
+    Returns:
+        [type]: Three arrays containing the wavenumbers for each axis.
+    """
 
     kx = np.zeros((nx), dtype=np.float64)
     ky = np.zeros((ny_half), dtype=np.float64)
@@ -727,6 +818,21 @@ def wavenumbers(Lx, Lz, nx, ny_half, nz):
     return kx, ky, kz
 
 def positions(Lx,Lz,nx,ny,nz):
+    """
+    Returns arrays of positions in 3D space given input parameters
+    
+    Args:
+        Lx ([type]): [description]
+        Lz ([type]): [description]
+        nx ([type]): [description]
+        ny ([type]): [description]
+        nz ([type]): [description]
+
+    Returns:
+        xs ([type]): array of x positions in 3D space
+        ys ([type]): array of y positions in 3D space
+        zs ([type]): array of z positions in 3D space
+    """
     xs = np.array([i * (Lx / nx) for i in range(0, nx)])
     ys = np.array([j * (Ly / ny) for j in range(0, ny)])
     zs = np.array([k * (Lz / nz) for k in range(0, nz)])
@@ -735,6 +841,19 @@ def positions(Lx,Lz,nx,ny,nz):
 
 
 def derivative(subState, axis, Lx, Lz):
+    """
+    Returns the derivative of a given substate with respect to a particular
+    axis.
+
+    Args:
+        subState (ndarray): [description].
+        axis (int): [description].
+        Lx (float): [description].
+        Lz (float): [description].
+  
+    Returns:
+        ndarray: [description].
+    """
     nx, ny_half, nz = subState.shape
     nxp = nx // 2 - 1
     nzp = nz // 2 - 1
@@ -759,6 +878,19 @@ def derivative(subState, axis, Lx, Lz):
 
 
 def vorticity(state, Lx, Lz):
+    """
+    Computes the vorticity of a state with given Lx and Lz.
+
+    Parameters:
+        state (ndarray): The state of the system to compute the vorticity for. This should be
+            a numpy array with shape (N, T, Nx, Ny).
+        Lx (int): The number of spacial points in the x-direction.
+        Lz (int): The number of spacial points in the z-direction.
+
+    Returns:
+        ndarray: The vorticity of the state with shape (N, T, Nx, Ny).
+    """
+    
     wy = derivative(state[:, :, :, 2], 1, Lx, Lz)
     vz = derivative(state[:, :, :, 1], 2, Lx, Lz)
     uz = derivative(state[:, :, :, 0], 2, Lx, Lz)
@@ -775,12 +907,36 @@ def vorticity(state, Lx, Lz):
 
 
 def dissipation(state, Lx, Lz, Re):
+    """
+    Computes the dissipation of the vorticity field due to viscosity.
+
+    Args:
+        state ([type]): [description]
+        Lx ([type]): [description]
+        Lz ([type]): [description]
+        Re ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+
     vor = vorticity(state, Lx, Lz)
     diss = 2 * inprod(vor, vor) / Re
 
     return diss
 
 def powerin(state, forcing, Re):
+    """
+    [Summary of the function powerin]
+
+    Args:
+        state ([type]): [description]
+        forcing ([type]): [description]
+        Re ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     # assumes no tilting
     if forcing == 1:
         return -(np.pi**2 / (4*Re)) * state[0,1,0,0].imag
@@ -789,6 +945,17 @@ def powerin(state, forcing, Re):
 
 
 def fftSpecToPhys(subState, supersample=False):
+    """
+    Convert the spectral representation of a substate to its physical representation.
+
+    Args:
+        subState (np.ndarray): The substate in spectral representation.
+        supersample (bool, optional): Whether to use supersampling. Defaults to False.
+
+    Returns:
+        np.ndarray: The substate in physical representation.
+    """
+    
     nx, ny_half, nz = subState.shape
     nxp, nzp = nx // 2 - 1, nz // 2 - 1
 
@@ -827,7 +994,26 @@ def fftSpecToPhys(subState, supersample=False):
 
 
 def fftSpecToPhysAll(state, supersample=False):
+    """
+    Converts the frequency space representation of a tensor into physical space.
+    
+    Parameters:
+        state ([type]): [description]. Should be a 3D numpy array with shape
+        (nx, ny_half, nz, 3) representing the frequency space representation of the
+        tensor. The first two dimensions represent the frequency coordinates in
+        x and y directions, respectively, while the last dimension represents
+        the frequency coordinate in z direction.
+        
+    Args:
+        supersample (bool, optional): [description]. Defaults to False.
+                                     If True, the function will stretch the tensor
+                                     along all three dimensions by a factor of nStretch.
 
+    Returns:
+        [type]: [description] The physical space representation of the input tensor
+                          represented as a 3D numpy array with shape (nxx, nyy, nzz, 3)
+    """
+    
     nx, ny_half, nz, _ = state.shape
 
     if supersample:
@@ -846,6 +1032,20 @@ def fftSpecToPhysAll(state, supersample=False):
 
 
 def fftPhysToSpec(stateOut, supersample=False):
+    """
+    This function performs a Fourier transform from the physical space to the
+    frequency space of the given stateOut tensor.
+
+    Args:
+        stateOut ([type]): A 3D NumPy array with shape (nxx, nyy, nzz)
+        representing a state in the physical space.
+        supersample (bool, optional): Whether to use oversampling or
+        undersampling for the Fourier transform. Defaults to False.
+
+    Returns:
+        [type]: A 3D NumPy array with shape (nx, ny, nz) representing the state
+        in the frequency space.
+    """
 
     nxx, nyy, nzz = stateOut.shape
 
@@ -897,6 +1097,21 @@ def fftPhysToSpec(stateOut, supersample=False):
 
 
 def fftPhysToSpecAll(stateOutAll, supersample=False):
+    """
+    Computes the Fourier transform of a 3D array of physical quantities (e.g.,
+    density or velocity) from Cartesian to spectral coordinates.
+
+    Parameters:
+        stateOutAll ([type]): A 4-dimensional tensor representing the physical
+            quantities in Cartesian coordinates, with shape (nxx, nyy, nzz, 3).
+        supersample (bool, optional): If True, the input is oversampled in the
+            frequency domain to produce a higher resolution spectrum. Defaults
+            to False.
+
+    Returns:
+        [type]: A 4-dimensional tensor representing the physical quantities in
+            spectral coordinates, with shape (nx, ny_half, nz, 3).
+    """
 
     nxx, nyy, nzz, _ = stateOutAll.shape
 
@@ -918,6 +1133,19 @@ def fftPhysToSpecAll(stateOutAll, supersample=False):
 
 
 def tilt_state(state, tilt_angle):
+    """
+    This function takes as input the state of a system and the tilt angle in
+    degrees and returns the state after applying a tilt operation.
+
+    Args:
+        state (array): The state of the system, represented by an array with
+        dimensions (nx, ny_half, nz, 3), where nx, ny_half and nz are integers
+        and 3 is the number of spatial dimensions.
+        tilt_angle (float): The angle of tilt in degrees.
+    
+    Returns:
+        array: The state after applying a tilt operation.
+    """
 
     nx, ny_half, nz, _ = state.shape
     tilt_radians = tilt_angle * np.pi / 180.0
@@ -937,7 +1165,28 @@ def tilt_state(state, tilt_angle):
 
 
 def laminar(forcing, nx, ny_half, nz, tilt_angle=0.0):
+    """
+    Initialize a laminar state for the given forcing and tilt angle
 
+    Parameters
+    ----------
+    forcing : int
+        The forcing to use for the initial state (1 or 2)
+    nx : int
+        The number of cells in the x direction
+    ny_half : int
+        The number of cells in the y direction
+    nz : int
+        The number of cells in the z direction
+    tilt_angle : float, optional
+        The angle to apply to the state (default is 0)
+
+    Returns
+    -------
+    np.ndarray
+        The laminar state as a numpy array
+    """
+        
     state = np.zeros((nx, ny_half, nz, 3), dtype=np.complex128)
     if forcing == 1:
         state[0, qF, 0, 0] = -1j * 0.5

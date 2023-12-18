@@ -8,7 +8,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from numpy.lib.npyio import save
 from tqdm.auto import tqdm
 
-import dns
+import dnsbox as dns
 
 cmap = "coolwarm"
 
